@@ -77,7 +77,7 @@
     .btn-icon { min-height: 36px; min-width: 36px; padding: 6px; border-radius: 8px; }
 
     /* ── BADGES ── */
-    .badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; }
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; flex-shrink: 0; white-space: nowrap; }
     .badge-libre { background: rgba(34,197,94,.15); color: var(--green); border: 1px solid rgba(34,197,94,.3); }
     .badge-emparejado { background: rgba(234,179,8,.15); color: var(--yellow); border: 1px solid rgba(234,179,8,.3); }
     .badge-baja { background: rgba(239,68,68,.15); color: var(--red); border: 1px solid rgba(239,68,68,.3); }
@@ -123,8 +123,9 @@
     .rival-row { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; margin-bottom: 10px; }
     .rival-row.discarded { opacity: .45; }
     .rival-row-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 8px; }
-    .rival-name { font-weight: 700; font-size: 15px; }
-    .rival-sub { font-size: 12px; color: var(--text2); margin-top: 2px; }
+    .rival-row-top > div:first-child { flex: 1; min-width: 0; }
+    .rival-name { font-weight: 700; font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .rival-sub { font-size: 12px; color: var(--text2); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .score-bar-wrap { margin-bottom: 8px; }
     .score-bar-bg { background: var(--bg4); border-radius: 999px; height: 6px; overflow: hidden; }
     .score-bar-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, #3b82f6, #22c55e); transition: width .3s; }
@@ -145,7 +146,7 @@
     .pelea-handle { color: var(--text3); cursor: grab; font-size: 18px; padding-top: 2px; flex-shrink: 0; }
     .pelea-handle:active { cursor: grabbing; }
     .pelea-info { flex: 1; min-width: 0; }
-    .pelea-names { font-weight: 700; font-size: 15px; margin-bottom: 4px; }
+    .pelea-names { font-weight: 700; font-size: 15px; margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .pelea-detail { font-size: 12px; color: var(--text2); }
     .pelea-actions { display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; }
     .pelea-item.cancelada { opacity: .4; }
@@ -186,6 +187,38 @@
     #loader { position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 999; font-size: 20px; font-weight: 700; color: var(--text2); }
     #loader.hidden { display: none; }
 
+    /* ── PIN SCREEN ── */
+    #pin-screen { position: fixed; inset: 0; background: var(--bg); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 24px; }
+    #pin-screen.hidden { display: none; }
+    .pin-box { width: 100%; max-width: 340px; text-align: center; }
+    .pin-logo { font-size: 52px; margin-bottom: 8px; }
+    .pin-title { font-size: 22px; font-weight: 800; margin-bottom: 4px; }
+    .pin-sub { font-size: 14px; color: var(--text2); margin-bottom: 28px; }
+    .pin-dots { display: flex; justify-content: center; gap: 14px; margin-bottom: 28px; }
+    .pin-dot { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--border); background: transparent; transition: background .15s, border-color .15s; }
+    .pin-dot.filled { background: var(--orange); border-color: var(--orange); }
+    .pin-dot.error { background: var(--red); border-color: var(--red); }
+    .pin-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; }
+    .pin-key { height: 64px; border-radius: 14px; border: 1px solid var(--border); background: var(--bg2); color: var(--text); font-size: 22px; font-weight: 700; cursor: pointer; transition: background .1s, transform .1s; -webkit-tap-highlight-color: transparent; }
+    .pin-key:active { background: var(--bg3); transform: scale(.94); }
+    .pin-key.del { font-size: 18px; }
+    .pin-error { color: var(--red); font-size: 13px; font-weight: 600; margin-top: 14px; min-height: 20px; }
+    .pin-badge-lector { display: inline-block; background: rgba(234,179,8,.15); color: var(--yellow); border: 1px solid rgba(234,179,8,.3); border-radius: 999px; padding: 3px 12px; font-size: 12px; font-weight: 700; margin-top: 16px; }
+    .lector-banner { background: rgba(234,179,8,.1); border-bottom: 2px solid var(--yellow); padding: 8px 16px; font-size: 13px; font-weight: 700; color: var(--yellow); text-align: center; flex-shrink: 0; display: none; }
+    body.modo-lector .lector-banner { display: block; }
+
+    /* Modo lector: ocultar todos los botones de acción */
+    body.modo-lector .btn-primary,
+    body.modo-lector .btn-danger,
+    body.modo-lector #theme-toggle { /* theme-toggle sí se muestra */ }
+    body.modo-lector .tab-header .btn-primary { display: none; }
+    body.modo-lector .tab-header .btn-ghost:not(#theme-toggle) { display: none; }
+    body.modo-lector .pelea-actions-row { display: none; }
+    body.modo-lector .rival-actions { display: none; }
+    body.modo-lector .filter-toggle { pointer-events: auto; } /* filtros sí funcionan */
+    body.modo-lector #modal-perfil .btn-ghost:not(:first-child),
+    body.modo-lector #modal-perfil .btn-danger { display: none; }
+
     /* ── TOAST ── */
     #toast { position: fixed; bottom: calc(var(--nav-h) + 10px); left: 50%; transform: translateX(-50%); background: var(--bg3); border: 1px solid var(--border); border-radius: 10px; padding: 10px 18px; font-size: 14px; font-weight: 600; z-index: 500; opacity: 0; transition: opacity .3s; white-space: nowrap; }
     #toast.show { opacity: 1; }
@@ -205,7 +238,37 @@
 <div id="loader">Cargando…</div>
 <div id="toast"></div>
 
+<!-- ═══════════ PIN SCREEN ═══════════ -->
+<div id="pin-screen">
+  <div class="pin-box">
+    <div class="pin-logo">🥊</div>
+    <div class="pin-title">Boxing Matchmaker</div>
+    <div class="pin-sub">Ingresá tu PIN para continuar</div>
+    <div class="pin-dots">
+      <div class="pin-dot" id="pd0"></div>
+      <div class="pin-dot" id="pd1"></div>
+      <div class="pin-dot" id="pd2"></div>
+      <div class="pin-dot" id="pd3"></div>
+    </div>
+    <div class="pin-grid">
+      <button class="pin-key" onclick="pinPress('1')">1</button>
+      <button class="pin-key" onclick="pinPress('2')">2</button>
+      <button class="pin-key" onclick="pinPress('3')">3</button>
+      <button class="pin-key" onclick="pinPress('4')">4</button>
+      <button class="pin-key" onclick="pinPress('5')">5</button>
+      <button class="pin-key" onclick="pinPress('6')">6</button>
+      <button class="pin-key" onclick="pinPress('7')">7</button>
+      <button class="pin-key" onclick="pinPress('8')">8</button>
+      <button class="pin-key" onclick="pinPress('9')">9</button>
+      <button class="pin-key" onclick="pinPress('0')" style="grid-column:2">0</button>
+      <button class="pin-key del" onclick="pinDel()">⌫</button>
+    </div>
+    <div class="pin-error" id="pin-error"></div>
+  </div>
+</div>
+
 <div id="app">
+  <div class="lector-banner">👁️ Modo lectura — solo visualización</div>
 
   <!-- ═══════════ TAB: BOXEADORES ═══════════ -->
   <div id="tab-boxeadores" class="tab-panel active">
@@ -259,6 +322,9 @@
     <!-- Panel rivales (se muestra cuando hay base seleccionada) -->
     <div id="match-rival-panel" style="display:none;flex:1;overflow:hidden;flex-direction:column">
       <div id="match-sticky">
+        <div id="reasign-banner" style="display:none;margin-bottom:10px">
+          <button class="btn btn-ghost btn-full" style="border:1px solid var(--border);color:var(--text2)" onclick="cancelarReasignacion()">← Cancelar reasignación</button>
+        </div>
         <div style="display:flex;justify-content:space-between;align-items:flex-start">
           <div>
             <div id="match-sticky-name"></div>
@@ -457,6 +523,79 @@
 // ══════════════════════════════════════════
 const SUPABASE_URL  = 'https://cutabahkbqshlkgfqqwu.supabase.co';
 const SUPABASE_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN1dGFiYWhrYnFzaGxrZ2ZxcXd1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2MDEyMDgsImV4cCI6MjA5NDE3NzIwOH0.kjwrdsF310LG1oQ83tISzECic42IcijD57q_f-Va9mo';
+
+// ══════════════════════════════════════════
+//  PIN DE ACCESO
+// ══════════════════════════════════════════
+const PIN_EDITOR = '2508';
+const PIN_LECTOR = '0000';
+
+let _pinBuffer = '';
+let _modoLector = false;
+
+function isLector() { return _modoLector; }
+
+function pinPress(digit) {
+  if (_pinBuffer.length >= 4) return;
+  _pinBuffer += digit;
+  updatePinDots();
+  if (_pinBuffer.length === 4) setTimeout(checkPin, 120);
+}
+
+function pinDel() {
+  _pinBuffer = _pinBuffer.slice(0, -1);
+  document.getElementById('pin-error').textContent = '';
+  updatePinDots(false);
+}
+
+function updatePinDots(error = false) {
+  for (let i = 0; i < 4; i++) {
+    const dot = document.getElementById('pd' + i);
+    dot.classList.toggle('filled', i < _pinBuffer.length && !error);
+    dot.classList.toggle('error', error);
+  }
+}
+
+function checkPin() {
+  if (_pinBuffer === PIN_EDITOR) {
+    _modoLector = false;
+    sessionStorage.setItem('boxing-pin', 'editor');
+    enterApp();
+  } else if (_pinBuffer === PIN_LECTOR) {
+    _modoLector = true;
+    sessionStorage.setItem('boxing-pin', 'lector');
+    enterApp();
+  } else {
+    updatePinDots(true);
+    document.getElementById('pin-error').textContent = 'PIN incorrecto. Intentá de nuevo.';
+    setTimeout(() => {
+      _pinBuffer = '';
+      updatePinDots(false);
+    }, 800);
+  }
+}
+
+function enterApp() {
+  document.getElementById('pin-screen').classList.add('hidden');
+  if (_modoLector) document.body.classList.add('modo-lector');
+  init();
+}
+
+// Verificar sesión guardada
+(function checkSession() {
+  const saved = sessionStorage.getItem('boxing-pin');
+  if (saved === 'editor') {
+    _modoLector = false;
+    document.getElementById('pin-screen').classList.add('hidden');
+    init();
+  } else if (saved === 'lector') {
+    _modoLector = true;
+    document.body.classList.add('modo-lector');
+    document.getElementById('pin-screen').classList.add('hidden');
+    init();
+  }
+  // Si no hay sesión, el pin-screen queda visible
+})();
 
 // ══════════════════════════════════════════
 //  ESTADO GLOBAL
@@ -677,7 +816,10 @@ function showPerfil(id) {
     <div class="modal-sep"></div>
     <div style="display:flex;flex-direction:column;gap:10px">
       <button class="btn btn-ghost btn-full" onclick="closeModal('modal-perfil');showEditBoxer('${id}')">✏️ Editar</button>
-      ${!b.baja ? `<button class="btn btn-ghost btn-full" onclick="closeModal('modal-perfil');marcarBaja('${id}')">🔴 Marcar baja</button>` : ''}
+      ${b.baja
+        ? `<button class="btn btn-ghost btn-full" onclick="closeModal('modal-perfil');quitarBaja('${id}')">✅ Quitar baja</button>`
+        : `<button class="btn btn-ghost btn-full" onclick="closeModal('modal-perfil');marcarBaja('${id}')">🔴 Marcar baja</button>`
+      }
       <button class="btn btn-danger btn-full" onclick="closeModal('modal-perfil');eliminarBoxeador('${id}')">🗑️ Eliminar boxeador</button>
     </div>
   `;
@@ -729,6 +871,7 @@ function selectTipoByValue(val) {
 }
 
 async function saveBoxer() {
+  if (isLector()) return;
   const id     = document.getElementById('boxer-edit-id').value;
   const nombre = document.getElementById('f-nombre').value.trim();
   if (!nombre) { showToast('❌ El nombre es obligatorio'); return; }
@@ -756,7 +899,7 @@ async function saveBoxer() {
 // ══════════════════════════════════════════
 //  MARCAR BAJA
 // ══════════════════════════════════════════
-async function marcarBaja(id) {
+async function marcarBaja(id) { if (isLector()) return;
   const b = STATE.boxeadores.find(x => x.id === id);
   const pelea = getPeleaActiva(id);
   const msg = pelea
@@ -772,9 +915,20 @@ async function marcarBaja(id) {
 }
 
 // ══════════════════════════════════════════
+//  QUITAR BAJA
+// ══════════════════════════════════════════
+async function quitarBaja(id) { if (isLector()) return;
+  const b = STATE.boxeadores.find(x => x.id === id);
+  showConfirm('Quitar baja', `¿Reactivar a ${b.nombre}?`, async () => {
+    await sb.from('boxeadores').update({ baja: false }).eq('id', id);
+    showToast('✅ Baja quitada');
+  }, { dangerLabel: 'Reactivar' });
+}
+
+// ══════════════════════════════════════════
 //  ELIMINAR BOXEADOR
 // ══════════════════════════════════════════
-async function eliminarBoxeador(id) {
+async function eliminarBoxeador(id) { if (isLector()) return;
   const b = STATE.boxeadores.find(x => x.id === id);
   const pelea = getPeleaActiva(id);
   const title = 'Eliminar boxeador';
@@ -870,6 +1024,8 @@ function selectMatchBase(id) {
 
 function clearMatchBase() {
   STATE.matchBase = null;
+  STATE.reasignando = false;
+  document.getElementById('reasign-banner').style.display = 'none';
   document.getElementById('match-select-panel').style.display = '';
   document.getElementById('match-rival-panel').style.display = 'none';
   renderMatchSelect();
@@ -984,7 +1140,7 @@ function renderRivales() {
 // ══════════════════════════════════════════
 //  EMPAREJAR
 // ══════════════════════════════════════════
-async function emparejar(baseId, rivalId) {
+async function emparejar(baseId, rivalId) { if (isLector()) return;
   const pelaRival = getPeleaActiva(rivalId);
   const pelaBase  = getPeleaActiva(baseId);
 
@@ -1120,9 +1276,12 @@ function renderPeleas() {
     html += canceladas.map(p => {
       const [b1, b2] = getPeleaBoxeadores(p);
       return `
-        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px;opacity:.4">
-          <div style="font-weight:600;font-size:14px">${esc(b1?.nombre || '?')} vs ${esc(b2?.nombre || '?')}</div>
-          ${p.motivo_cancelacion ? `<div style="font-size:12px;color:var(--text2);margin-top:4px">Motivo: ${esc(p.motivo_cancelacion)}</div>` : ''}
+        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px;display:flex;align-items:center;gap:10px">
+          <div style="flex:1;min-width:0;opacity:.5">
+            <div style="font-weight:600;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(b1?.nombre || '?')} vs ${esc(b2?.nombre || '?')}</div>
+            ${p.motivo_cancelacion ? `<div style="font-size:12px;color:var(--text2);margin-top:4px">Motivo: ${esc(p.motivo_cancelacion)}</div>` : ''}
+          </div>
+          <button class="btn btn-danger btn-sm" style="flex-shrink:0" onclick="eliminarPeleaCancelada('${p.id}')">🗑 Eliminar</button>
         </div>`;
     }).join('');
     html += '</div>';
@@ -1152,10 +1311,10 @@ function peleaItemHTML(pelea, ordenMap) {
           ${b1 ? `${b1.peso ?? '?'}kg · ${b1.edad ?? '?'}a · ${esc(b1.gimnasio || '—')}` : ''}<br>
           ${b2 ? `${b2.peso ?? '?'}kg · ${b2.edad ?? '?'}a · ${esc(b2.gimnasio || '—')}` : ''}
         </div>
-        <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">
+        <div class="pelea-actions-row" style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">
           <button class="btn btn-ghost btn-sm" onclick="showAssignBloque('${pelea.id}')">📅 Bloque</button>
-          <button class="btn btn-ghost btn-sm" onclick="reasignarBoxeador('${pelea.id}',1)">↔ B1</button>
-          <button class="btn btn-ghost btn-sm" onclick="reasignarBoxeador('${pelea.id}',2)">↔ B2</button>
+          <button class="btn btn-ghost btn-sm" onclick="reasignarBoxeador('${pelea.id}',1)">↔ Reemplazar ${esc(b2?.nombre || '?')}</button>
+          <button class="btn btn-ghost btn-sm" onclick="reasignarBoxeador('${pelea.id}',2)">↔ Reemplazar ${esc(b1?.nombre || '?')}</button>
           <button class="btn btn-danger btn-sm" onclick="cancelarPelea('${pelea.id}')">✕</button>
         </div>
       </div>
@@ -1198,7 +1357,7 @@ function destroySortables() {
   _sortableInstances = [];
 }
 
-async function onBloqueReorder(evt) {
+async function onBloqueReorder(evt) { if (isLector()) { await loadAll(); render(); return; }
   const container = document.getElementById('bloques-sortable-container');
   if (!container) return;
   const sections = [...container.querySelectorAll('.bloque-section[data-bloque-id]')];
@@ -1208,7 +1367,7 @@ async function onBloqueReorder(evt) {
   }
 }
 
-async function onPeleaReorder(evt) {
+async function onPeleaReorder(evt) { if (isLector()) { await loadAll(); render(); return; }
   const targetList  = evt.to;
   const targetBloque= targetList.dataset.bloqueId;
   const peleaId     = evt.item.dataset.peleaId;
@@ -1249,7 +1408,23 @@ async function onPeleaReorder(evt) {
 // ══════════════════════════════════════════
 //  ACCIONES DE PELEAS
 // ══════════════════════════════════════════
-function cancelarPelea(id) {
+function eliminarPeleaCancelada(id) {
+  if (isLector()) return;
+  const p = STATE.peleas.find(x => x.id === id);
+  const [b1, b2] = getPeleaBoxeadores(p);
+  showConfirm(
+    'Eliminar pelea cancelada',
+    `¿Eliminar definitivamente "${b1?.nombre || '?'} vs ${b2?.nombre || '?'}"?`,
+    async () => {
+      await sb.from('pelea_bloque').delete().eq('pelea_id', id);
+      await sb.from('peleas').delete().eq('id', id);
+      showToast('🗑️ Pelea eliminada');
+    },
+    { dangerLabel: 'Sí, eliminar' }
+  );
+}
+
+function cancelarPelea(id) { if (isLector()) return;
   showConfirm('Cancelar pelea', '¿Cancelar esta pelea? Ambos boxeadores quedarán libres.', async () => {
     const motivo = document.getElementById('confirm-motivo').value.trim() || 'Cancelada manualmente';
     await sb.from('peleas').update({ cancelada: true, motivo_cancelacion: motivo }).eq('id', id);
@@ -1257,19 +1432,25 @@ function cancelarPelea(id) {
   }, { showMotivo: true, dangerLabel: 'Cancelar pelea' });
 }
 
-function reasignarBoxeador(peleaId, slot) {
-  // Buscar quién está en ese slot
+function reasignarBoxeador(peleaId, slot) { if (isLector()) return;
   const pelea = STATE.peleas.find(p => p.id === peleaId);
   if (!pelea) return;
   const boxeadorId = slot === 1 ? pelea.boxeador1_id : pelea.boxeador2_id;
   STATE.matchBase = boxeadorId;
+  STATE.reasignando = true;
   switchTab('match');
-  // Mostrar rival panel preseleccionado
   selectMatchBase(boxeadorId);
-  // Al emparejar en match se cancela la pelea vieja automáticamente
+  document.getElementById('reasign-banner').style.display = '';
 }
 
-function showAssignBloque(peleaId) {
+function cancelarReasignacion() {
+  STATE.reasignando = false;
+  document.getElementById('reasign-banner').style.display = 'none';
+  clearMatchBase();
+  switchTab('peleas');
+}
+
+function showAssignBloque(peleaId) { if (isLector()) return;
   document.getElementById('assign-pelea-id').value = peleaId;
   const pb = STATE.peleasBloques.find(x => x.pelea_id === peleaId);
   const opts = STATE.bloques.map(bl =>
@@ -1398,7 +1579,7 @@ function renderBloques() {
 
 function showAddBloque() { openModal('modal-bloque'); }
 
-async function saveBloque() {
+async function saveBloque() { if (isLector()) return;
   const inicio = document.getElementById('b-inicio').value;
   const fin    = document.getElementById('b-fin').value;
   if (!inicio || !fin) { showToast('❌ Ingresá hora inicio y fin'); return; }
@@ -1411,7 +1592,7 @@ async function saveBloque() {
   showToast('✅ Bloque creado');
 }
 
-async function eliminarBloque(id) {
+async function eliminarBloque(id) { if (isLector()) return;
   const bl = STATE.bloques.find(x => x.id === id);
   const count = STATE.peleasBloques.filter(pb => pb.bloque_id === id).length;
   const msg = count
