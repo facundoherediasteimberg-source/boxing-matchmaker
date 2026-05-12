@@ -218,6 +218,7 @@
     body.modo-lector .filter-toggle { pointer-events: auto; } /* filtros sí funcionan */
     body.modo-lector #modal-perfil .btn-ghost:not(:first-child),
     body.modo-lector #modal-perfil .btn-danger { display: none; }
+    body.modo-lector .canceladas-section .btn-danger { display: none; }
 
     /* ── TOAST ── */
     #toast { position: fixed; bottom: calc(var(--nav-h) + 10px); left: 50%; transform: translateX(-50%); background: var(--bg3); border: 1px solid var(--border); border-radius: 10px; padding: 10px 18px; font-size: 14px; font-weight: 600; z-index: 500; opacity: 0; transition: opacity .3s; white-space: nowrap; }
@@ -559,11 +560,11 @@ function updatePinDots(error = false) {
 function checkPin() {
   if (_pinBuffer === PIN_EDITOR) {
     _modoLector = false;
-    sessionStorage.setItem('boxing-pin', 'editor');
+    sessionStorage.setItem('boxing-pin-v2', 'editor');
     enterApp();
   } else if (_pinBuffer === PIN_LECTOR) {
     _modoLector = true;
-    sessionStorage.setItem('boxing-pin', 'lector');
+    sessionStorage.setItem('boxing-pin-v2', 'lector');
     enterApp();
   } else {
     updatePinDots(true);
@@ -583,7 +584,7 @@ function enterApp() {
 
 // Verificar sesión guardada
 (function checkSession() {
-  const saved = sessionStorage.getItem('boxing-pin');
+  const saved = sessionStorage.getItem('boxing-pin-v2');
   if (saved === 'editor') {
     _modoLector = false;
     document.getElementById('pin-screen').classList.add('hidden');
