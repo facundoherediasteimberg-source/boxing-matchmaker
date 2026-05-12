@@ -1,0 +1,1380 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Boxing Matchmaker</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0f0f0f;
+      --bg2: #1a1a1a;
+      --bg3: #252525;
+      --bg4: #2e2e2e;
+      --border: #333;
+      --text: #f0f0f0;
+      --text2: #aaa;
+      --text3: #666;
+      --accent: #3b82f6;
+      --accent-hover: #2563eb;
+      --green: #22c55e;
+      --yellow: #eab308;
+      --red: #ef4444;
+      --gray: #555;
+      --nav-h: 64px;
+      --header-h: 56px;
+    }
+    html, body { height: 100%; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 15px; line-height: 1.4; overflow: hidden; }
+    #app { display: flex; flex-direction: column; height: 100vh; }
+
+    /* ── NAV ── */
+    #bottom-nav { display: flex; background: var(--bg2); border-top: 1px solid var(--border); height: var(--nav-h); flex-shrink: 0; z-index: 100; }
+    .nav-btn { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; border: none; background: none; color: var(--text2); font-size: 11px; cursor: pointer; padding: 4px 2px; transition: color .15s; -webkit-tap-highlight-color: transparent; }
+    .nav-btn.active { color: var(--accent); }
+    .nav-btn svg { width: 22px; height: 22px; }
+
+    /* ── TABS ── */
+    .tab-panel { display: none; flex: 1; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; }
+    .tab-panel.active { display: flex; flex-direction: column; }
+
+    /* ── HEADER ── */
+    .tab-header { background: var(--bg2); border-bottom: 1px solid var(--border); padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-shrink: 0; }
+    .tab-title { font-size: 18px; font-weight: 700; }
+
+    /* ── BOTONES ── */
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px; padding: 10px 16px; border-radius: 10px; border: none; font-size: 15px; font-weight: 600; cursor: pointer; transition: background .15s, opacity .15s; -webkit-tap-highlight-color: transparent; }
+    .btn:active { opacity: .8; }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover { background: var(--accent-hover); }
+    .btn-danger { background: var(--red); color: #fff; }
+    .btn-ghost { background: var(--bg3); color: var(--text); }
+    .btn-ghost:hover { background: var(--bg4); }
+    .btn-sm { min-height: 36px; padding: 6px 12px; font-size: 13px; }
+    .btn-full { width: 100%; }
+    .btn-icon { min-height: 36px; min-width: 36px; padding: 6px; border-radius: 8px; }
+
+    /* ── BADGES ── */
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; }
+    .badge-libre { background: rgba(34,197,94,.15); color: var(--green); border: 1px solid rgba(34,197,94,.3); }
+    .badge-emparejado { background: rgba(234,179,8,.15); color: var(--yellow); border: 1px solid rgba(234,179,8,.3); }
+    .badge-baja { background: rgba(239,68,68,.15); color: var(--red); border: 1px solid rgba(239,68,68,.3); }
+    .badge-cancelado { background: rgba(85,85,85,.2); color: var(--gray); border: 1px solid rgba(85,85,85,.3); }
+
+    /* ── CARDS ── */
+    .card { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 14px; }
+    .card + .card { margin-top: 10px; }
+
+    /* ── STATS ── */
+    #stats-bar { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; padding: 12px 16px; flex-shrink: 0; }
+    .stat-box { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 10px 6px; text-align: center; }
+    .stat-num { font-size: 22px; font-weight: 800; }
+    .stat-label { font-size: 10px; color: var(--text2); margin-top: 2px; text-transform: uppercase; letter-spacing: .5px; }
+
+    /* ── FILTER BAR ── */
+    .filter-bar { padding: 8px 16px; display: flex; gap: 8px; flex-shrink: 0; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+    .filter-toggle { min-height: 36px; padding: 6px 14px; border-radius: 20px; border: 1px solid var(--border); background: var(--bg2); color: var(--text2); font-size: 13px; cursor: pointer; }
+    .filter-toggle.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .filter-input { flex: 1; min-width: 120px; height: 36px; background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 13px; padding: 0 10px; }
+    .filter-select { height: 36px; background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 13px; padding: 0 8px; cursor: pointer; }
+    .filter-weight { display: flex; gap: 4px; align-items: center; }
+    .filter-weight input { width: 60px; height: 36px; background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 13px; padding: 0 8px; }
+    .filter-weight span { color: var(--text2); font-size: 13px; }
+
+    /* ── BOXER LIST ── */
+    #list-boxeadores { padding: 12px 16px 80px; flex: 1; }
+    .boxer-row { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 14px; display: flex; align-items: center; gap: 12px; cursor: pointer; margin-bottom: 10px; transition: background .15s; }
+    .boxer-row:active { background: var(--bg3); }
+    .boxer-row.baja { opacity: .5; }
+    .boxer-row-info { flex: 1; min-width: 0; }
+    .boxer-name { font-weight: 700; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .boxer-sub { font-size: 12px; color: var(--text2); margin-top: 3px; }
+
+    /* ── MATCH TAB ── */
+    #match-select-panel { padding: 12px 16px 80px; flex: 1; overflow-y: auto; }
+    #match-rival-panel { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
+    #match-sticky { background: var(--bg2); border-bottom: 2px solid var(--accent); padding: 12px 16px; flex-shrink: 0; }
+    #match-sticky-name { font-size: 17px; font-weight: 800; margin-bottom: 4px; }
+    #match-sticky-info { font-size: 13px; color: var(--text2); }
+    #match-rival-filters { padding: 8px 16px; border-bottom: 1px solid var(--border); flex-shrink: 0; display: flex; flex-direction: column; gap: 6px; background: var(--bg); }
+    #match-rival-list { flex: 1; overflow-y: auto; padding: 10px 16px 80px; }
+    .rival-row { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; margin-bottom: 10px; }
+    .rival-row.discarded { opacity: .45; }
+    .rival-row-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 8px; }
+    .rival-name { font-weight: 700; font-size: 15px; }
+    .rival-sub { font-size: 12px; color: var(--text2); margin-top: 2px; }
+    .score-bar-wrap { margin-bottom: 8px; }
+    .score-bar-bg { background: var(--bg4); border-radius: 999px; height: 6px; overflow: hidden; }
+    .score-bar-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, #3b82f6, #22c55e); transition: width .3s; }
+    .score-meta { display: flex; justify-content: space-between; margin-top: 4px; font-size: 11px; color: var(--text2); }
+    .discard-reason { font-size: 12px; color: var(--gray); font-style: italic; }
+    .rival-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 8px; }
+
+    /* ── PELEAS TAB ── */
+    #peleas-content { padding: 10px 16px 80px; flex: 1; overflow-y: auto; }
+    .bloque-section { margin-bottom: 16px; }
+    .bloque-header { background: var(--bg3); border: 1px solid var(--border); border-radius: 10px 10px 0 0; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; font-weight: 700; font-size: 14px; cursor: grab; }
+    .bloque-header:active { cursor: grabbing; }
+    .bloque-header .handle { color: var(--text3); margin-right: 8px; }
+    .bloque-list { border: 1px solid var(--border); border-top: none; border-radius: 0 0 10px 10px; min-height: 10px; }
+    .pelea-item { background: var(--bg2); padding: 12px 14px; border-bottom: 1px solid var(--border); display: flex; gap: 10px; align-items: flex-start; }
+    .pelea-item:last-child { border-bottom: none; border-radius: 0 0 10px 10px; }
+    .pelea-handle { color: var(--text3); cursor: grab; font-size: 18px; padding-top: 2px; flex-shrink: 0; }
+    .pelea-handle:active { cursor: grabbing; }
+    .pelea-info { flex: 1; min-width: 0; }
+    .pelea-names { font-weight: 700; font-size: 15px; margin-bottom: 4px; }
+    .pelea-detail { font-size: 12px; color: var(--text2); }
+    .pelea-actions { display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; }
+    .pelea-item.cancelada { opacity: .4; }
+    .canceladas-section { margin-top: 16px; }
+    .section-label { font-size: 12px; color: var(--text3); text-transform: uppercase; letter-spacing: 1px; font-weight: 700; margin-bottom: 8px; padding: 0 2px; }
+
+    /* ── BLOQUES TAB ── */
+    #bloques-content { padding: 12px 16px 80px; flex: 1; overflow-y: auto; }
+    .bloque-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 10px; display: flex; align-items: center; gap: 12px; }
+    .bloque-card-handle { color: var(--text3); cursor: grab; font-size: 20px; flex-shrink: 0; }
+    .bloque-card-info { flex: 1; }
+    .bloque-card-name { font-weight: 700; font-size: 16px; }
+    .bloque-card-sub { font-size: 12px; color: var(--text2); margin-top: 3px; }
+
+    /* ── FORM ── */
+    .form-group { margin-bottom: 14px; }
+    .form-label { display: block; font-size: 13px; color: var(--text2); margin-bottom: 6px; font-weight: 600; }
+    .form-input { width: 100%; height: 44px; background: var(--bg3); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-size: 15px; padding: 0 14px; }
+    .form-input:focus { outline: none; border-color: var(--accent); }
+    .form-select { width: 100%; height: 44px; background: var(--bg3); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-size: 15px; padding: 0 14px; cursor: pointer; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .radio-group { display: flex; gap: 8px; flex-wrap: wrap; }
+    .radio-btn { min-height: 40px; padding: 8px 14px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg3); color: var(--text2); font-size: 14px; cursor: pointer; transition: all .15s; }
+    .radio-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+    /* ── MODAL ── */
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.7); z-index: 200; align-items: flex-end; justify-content: center; }
+    .modal-overlay.open { display: flex; }
+    .modal-box { background: var(--bg2); border-radius: 20px 20px 0 0; width: 100%; max-width: 540px; max-height: 92vh; overflow-y: auto; padding: 20px 20px 40px; }
+    .modal-handle { width: 40px; height: 4px; background: var(--bg4); border-radius: 99px; margin: 0 auto 16px; }
+    .modal-title { font-size: 18px; font-weight: 800; margin-bottom: 16px; }
+    .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
+    .modal-actions .btn { flex: 1; }
+    .modal-sep { height: 1px; background: var(--border); margin: 16px 0; }
+
+    /* ── LOADER ── */
+    #loader { position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 999; font-size: 20px; font-weight: 700; color: var(--text2); }
+    #loader.hidden { display: none; }
+
+    /* ── TOAST ── */
+    #toast { position: fixed; bottom: calc(var(--nav-h) + 10px); left: 50%; transform: translateX(-50%); background: var(--bg3); border: 1px solid var(--border); border-radius: 10px; padding: 10px 18px; font-size: 14px; font-weight: 600; z-index: 500; opacity: 0; transition: opacity .3s; white-space: nowrap; }
+    #toast.show { opacity: 1; }
+
+    /* ── EMPTY STATE ── */
+    .empty-state { text-align: center; padding: 40px 20px; color: var(--text3); }
+    .empty-state svg { width: 48px; height: 48px; margin-bottom: 12px; }
+    .empty-state p { font-size: 15px; }
+
+    /* ── DRAG GHOST ── */
+    .sortable-ghost { opacity: .3; }
+    .sortable-drag { opacity: 1; box-shadow: 0 8px 32px rgba(0,0,0,.5); }
+  </style>
+</head>
+<body>
+
+<div id="loader">Cargando…</div>
+<div id="toast"></div>
+
+<div id="app">
+
+  <!-- ═══════════ TAB: BOXEADORES ═══════════ -->
+  <div id="tab-boxeadores" class="tab-panel active">
+    <div class="tab-header">
+      <span class="tab-title">🥊 Boxeadores</span>
+      <button class="btn btn-primary btn-sm" onclick="showAddBoxer()">+ Agregar</button>
+    </div>
+    <div id="stats-bar">
+      <div class="stat-box"><div class="stat-num" id="stat-total">0</div><div class="stat-label">Total</div></div>
+      <div class="stat-box"><div class="stat-num" id="stat-emp">0</div><div class="stat-label">Empare.</div></div>
+      <div class="stat-box"><div class="stat-num" id="stat-lib">0</div><div class="stat-label">Libres</div></div>
+      <div class="stat-box"><div class="stat-num" id="stat-baj">0</div><div class="stat-label">Bajas</div></div>
+    </div>
+    <div class="filter-bar">
+      <input class="filter-input" id="search-boxeadores" placeholder="Buscar por nombre…" oninput="renderBoxeadores()" />
+      <button class="filter-toggle" id="toggle-libres" onclick="toggleFiltroLibres()">Solo libres</button>
+    </div>
+    <div id="list-boxeadores"></div>
+  </div>
+
+  <!-- ═══════════ TAB: MATCH ═══════════ -->
+  <div id="tab-match" class="tab-panel">
+    <div class="tab-header">
+      <span class="tab-title">⚡ Match</span>
+    </div>
+    <!-- Panel selector de boxeador base -->
+    <div id="match-select-panel">
+      <div class="filter-bar" style="border:none;padding:0 0 10px 0;flex-direction:column;gap:8px">
+        <input class="filter-input" id="match-search" placeholder="Buscar boxeador…" oninput="renderMatchSelect()" style="width:100%" />
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <div class="filter-weight">
+            <input type="number" id="match-peso-min" placeholder="kg min" oninput="renderMatchSelect()" />
+            <span>–</span>
+            <input type="number" id="match-peso-max" placeholder="kg max" oninput="renderMatchSelect()" />
+          </div>
+          <select class="filter-select" id="match-gym-filter" onchange="renderMatchSelect()">
+            <option value="">Todos los gimnasios</option>
+          </select>
+          <select class="filter-select" id="match-estado-filter" onchange="renderMatchSelect()">
+            <option value="">Todos</option>
+            <option value="libre">Solo libres</option>
+            <option value="emparejado">Emparejados</option>
+          </select>
+        </div>
+      </div>
+      <div id="match-boxer-list"></div>
+    </div>
+    <!-- Panel rivales (se muestra cuando hay base seleccionada) -->
+    <div id="match-rival-panel" style="display:none;flex:1;overflow:hidden;flex-direction:column">
+      <div id="match-sticky">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div>
+            <div id="match-sticky-name"></div>
+            <div id="match-sticky-info"></div>
+          </div>
+          <button class="btn btn-ghost btn-sm" onclick="clearMatchBase()">Cambiar</button>
+        </div>
+      </div>
+      <div id="match-rival-filters">
+        <input class="filter-input" id="rival-search" placeholder="Buscar rival…" oninput="renderRivales()" style="width:100%" />
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <div class="filter-weight">
+            <input type="number" id="rival-peso-min" placeholder="kg min" oninput="renderRivales()" />
+            <span style="color:var(--text2)">–</span>
+            <input type="number" id="rival-peso-max" placeholder="kg max" oninput="renderRivales()" />
+          </div>
+          <select class="filter-select" id="rival-gym-filter" onchange="renderRivales()">
+            <option value="">Todos los gimnasios</option>
+          </select>
+          <select class="filter-select" id="rival-estado-filter" onchange="renderRivales()">
+            <option value="">Todos</option>
+            <option value="libre">Solo libres</option>
+            <option value="emparejado">Emparejados</option>
+          </select>
+        </div>
+      </div>
+      <div id="match-rival-list"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════ TAB: PELEAS ═══════════ -->
+  <div id="tab-peleas" class="tab-panel">
+    <div class="tab-header">
+      <span class="tab-title">📋 Peleas</span>
+      <button class="btn btn-ghost btn-sm" onclick="exportCSV()">📥 Exportar</button>
+    </div>
+    <div id="peleas-content"></div>
+  </div>
+
+  <!-- ═══════════ TAB: BLOQUES ═══════════ -->
+  <div id="tab-bloques" class="tab-panel">
+    <div class="tab-header">
+      <span class="tab-title">🕐 Bloques</span>
+      <button class="btn btn-primary btn-sm" onclick="showAddBloque()">+ Agregar</button>
+    </div>
+    <div id="bloques-content"></div>
+  </div>
+
+  <!-- ═══════════ BOTTOM NAV ═══════════ -->
+  <nav id="bottom-nav">
+    <button class="nav-btn active" id="nav-boxeadores" onclick="switchTab('boxeadores')">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+      Boxeadores
+    </button>
+    <button class="nav-btn" id="nav-match" onclick="switchTab('match')">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+      Match
+    </button>
+    <button class="nav-btn" id="nav-peleas" onclick="switchTab('peleas')">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+      Peleas
+    </button>
+    <button class="nav-btn" id="nav-bloques" onclick="switchTab('bloques')">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      Bloques
+    </button>
+  </nav>
+</div>
+
+<!-- ═══════════ MODALES ═══════════ -->
+
+<!-- Modal: Agregar/Editar boxeador -->
+<div class="modal-overlay" id="modal-boxer">
+  <div class="modal-box">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="modal-boxer-title">Agregar boxeador</div>
+    <input type="hidden" id="boxer-edit-id" />
+    <div class="form-group">
+      <label class="form-label">Nombre</label>
+      <input class="form-input" id="f-nombre" placeholder="Nombre completo" />
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Edad</label>
+        <input class="form-input" id="f-edad" type="number" placeholder="años" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Peso (kg)</label>
+        <input class="form-input" id="f-peso" type="number" step="0.1" placeholder="kg" />
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Gimnasio</label>
+      <input class="form-input" id="f-gimnasio" placeholder="Nombre del gimnasio" />
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Peleas previas</label>
+        <input class="form-input" id="f-peleas" type="number" placeholder="0" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Sexo</label>
+        <select class="form-select" id="f-sexo">
+          <option value="M">Masculino</option>
+          <option value="F">Femenino</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Tipo de participación</label>
+      <div class="radio-group" id="f-tipo-group">
+        <button class="radio-btn active" onclick="selectTipo('Exhibición',this)">Exhibición</button>
+        <button class="radio-btn" onclick="selectTipo('Amateur',this)">Amateur</button>
+        <button class="radio-btn" onclick="selectTipo('Debutante',this)">Debutante</button>
+        <button class="radio-btn" onclick="selectTipo('Elite',this)">Elite</button>
+      </div>
+      <input type="hidden" id="f-tipo" value="Exhibición" />
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-boxer')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveBoxer()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Perfil boxeador -->
+<div class="modal-overlay" id="modal-perfil">
+  <div class="modal-box">
+    <div class="modal-handle"></div>
+    <div id="perfil-content"></div>
+  </div>
+</div>
+
+<!-- Modal: Confirmación genérica -->
+<div class="modal-overlay" id="modal-confirm">
+  <div class="modal-box">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="confirm-title">¿Confirmar?</div>
+    <p id="confirm-body" style="color:var(--text2);font-size:15px;margin-bottom:6px"></p>
+    <div class="form-group" id="confirm-motivo-wrap" style="display:none;margin-top:12px">
+      <label class="form-label">Motivo de cancelación</label>
+      <input class="form-input" id="confirm-motivo" placeholder="Ej: lesión, inasistencia…" />
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-confirm')">Cancelar</button>
+      <button class="btn btn-danger" id="confirm-ok-btn" onclick="confirmCallback()">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Agregar bloque -->
+<div class="modal-overlay" id="modal-bloque">
+  <div class="modal-box">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Agregar bloque</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Hora inicio</label>
+        <input class="form-input" id="b-inicio" type="time" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Hora fin</label>
+        <input class="form-input" id="b-fin" type="time" />
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-bloque')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveBloque()">Crear bloque</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Asignar bloque a pelea -->
+<div class="modal-overlay" id="modal-assign-bloque">
+  <div class="modal-box">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Asignar bloque</div>
+    <input type="hidden" id="assign-pelea-id" />
+    <div class="form-group">
+      <label class="form-label">Bloque</label>
+      <select class="form-select" id="assign-bloque-sel"></select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-assign-bloque')">Cancelar</button>
+      <button class="btn btn-primary" onclick="doAssignBloque()">Asignar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════
+//  CONFIG — reemplazá estos valores
+// ══════════════════════════════════════════
+const SUPABASE_URL  = 'https://cutabahkbqshlkgfqqwu.supabase.co';
+const SUPABASE_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN1dGFiYWhrYnFzaGxrZ2ZxcXd1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2MDEyMDgsImV4cCI6MjA5NDE3NzIwOH0.kjwrdsF310LG1oQ83tISzECic42IcijD57q_f-Va9mo';
+
+// ══════════════════════════════════════════
+//  ESTADO GLOBAL
+// ══════════════════════════════════════════
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const STATE = {
+  boxeadores: [],
+  peleas: [],
+  bloques: [],
+  peleasBloques: [],
+  activeTab: 'boxeadores',
+  matchBase: null,         // boxeador seleccionado como base en Match
+  filtroLibres: false,
+};
+
+let _confirmCb = null;
+let _sortableInstances = [];
+
+// ══════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════
+async function init() {
+  await loadAll();
+  subscribeRealtime();
+  hideLoader();
+  render();
+}
+
+async function loadAll() {
+  const [b, p, bl, pb] = await Promise.all([
+    sb.from('boxeadores').select('*').order('nombre'),
+    sb.from('peleas').select('*').order('orden'),
+    sb.from('bloques').select('*').order('orden'),
+    sb.from('pelea_bloque').select('*').order('posicion'),
+  ]);
+  STATE.boxeadores   = b.data  || [];
+  STATE.peleas       = p.data  || [];
+  STATE.bloques      = bl.data || [];
+  STATE.peleasBloques= pb.data || [];
+}
+
+function subscribeRealtime() {
+  sb.channel('all-changes')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'boxeadores'   }, reloadAndRender)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'peleas'       }, reloadAndRender)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'bloques'      }, reloadAndRender)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'pelea_bloque' }, reloadAndRender)
+    .subscribe();
+}
+
+async function reloadAndRender() {
+  await loadAll();
+  render();
+}
+
+function render() {
+  renderBoxeadores();
+  renderMatchSelect();
+  if (STATE.matchBase) renderRivales();
+  renderPeleas();
+  renderBloques();
+  updateGymDropdowns();
+}
+
+function hideLoader() {
+  document.getElementById('loader').classList.add('hidden');
+}
+
+// ══════════════════════════════════════════
+//  HELPERS
+// ══════════════════════════════════════════
+function getPeleaActiva(boxeadorId) {
+  return STATE.peleas.find(p =>
+    !p.cancelada && (p.boxeador1_id === boxeadorId || p.boxeador2_id === boxeadorId)
+  );
+}
+
+function getBadge(boxeador) {
+  if (boxeador.baja) return '<span class="badge badge-baja">Baja</span>';
+  const pelea = getPeleaActiva(boxeador.id);
+  if (pelea) return '<span class="badge badge-emparejado">Emparejado</span>';
+  return '<span class="badge badge-libre">Libre</span>';
+}
+
+function getGimnasios() {
+  const gyms = [...new Set(STATE.boxeadores.map(b => b.gimnasio).filter(Boolean))].sort();
+  return gyms;
+}
+
+function updateGymDropdowns() {
+  const gyms = getGimnasios();
+  const opts = '<option value="">Todos los gimnasios</option>' + gyms.map(g => `<option value="${esc(g)}">${esc(g)}</option>`).join('');
+  ['match-gym-filter', 'rival-gym-filter'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { const v = el.value; el.innerHTML = opts; el.value = v; }
+  });
+}
+
+function esc(str) {
+  return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function showToast(msg, duration = 2200) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), duration);
+}
+
+function switchTab(name) {
+  STATE.activeTab = name;
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  document.getElementById('nav-' + name).classList.add('active');
+}
+
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+function confirmCallback() {
+  closeModal('modal-confirm');
+  if (_confirmCb) { _confirmCb(); _confirmCb = null; }
+}
+
+function showConfirm(title, body, cb, { showMotivo = false, dangerLabel = 'Confirmar' } = {}) {
+  document.getElementById('confirm-title').textContent = title;
+  document.getElementById('confirm-body').textContent  = body;
+  document.getElementById('confirm-ok-btn').textContent = dangerLabel;
+  const motivoWrap = document.getElementById('confirm-motivo-wrap');
+  const motivoInput = document.getElementById('confirm-motivo');
+  if (showMotivo) { motivoWrap.style.display = ''; motivoInput.value = ''; }
+  else             { motivoWrap.style.display = 'none'; }
+  _confirmCb = cb;
+  openModal('modal-confirm');
+}
+
+// ══════════════════════════════════════════
+//  TAB: BOXEADORES
+// ══════════════════════════════════════════
+function toggleFiltroLibres() {
+  STATE.filtroLibres = !STATE.filtroLibres;
+  document.getElementById('toggle-libres').classList.toggle('active', STATE.filtroLibres);
+  renderBoxeadores();
+}
+
+function renderBoxeadores() {
+  const search = document.getElementById('search-boxeadores').value.toLowerCase();
+  let boxeadores = [...STATE.boxeadores];
+
+  // Calcular stats antes de filtrar
+  const totales = boxeadores.filter(b => !b.baja);
+  const emparejados = totales.filter(b => getPeleaActiva(b.id));
+  const libres = totales.filter(b => !getPeleaActiva(b.id));
+  const bajas = STATE.boxeadores.filter(b => b.baja);
+  document.getElementById('stat-total').textContent = STATE.boxeadores.length;
+  document.getElementById('stat-emp').textContent   = emparejados.length;
+  document.getElementById('stat-lib').textContent   = libres.length;
+  document.getElementById('stat-baj').textContent   = bajas.length;
+
+  // Filtros
+  if (search)             boxeadores = boxeadores.filter(b => b.nombre?.toLowerCase().includes(search));
+  if (STATE.filtroLibres) boxeadores = boxeadores.filter(b => !b.baja && !getPeleaActiva(b.id));
+
+  // Ordenar: libres → emparejados → bajas
+  boxeadores.sort((a, b) => {
+    const getOrd = x => x.baja ? 2 : getPeleaActiva(x.id) ? 1 : 0;
+    return getOrd(a) - getOrd(b) || (a.nombre||'').localeCompare(b.nombre||'');
+  });
+
+  const container = document.getElementById('list-boxeadores');
+  if (!boxeadores.length) {
+    container.innerHTML = `<div class="empty-state"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/></svg><p>No hay boxeadores</p></div>`;
+    return;
+  }
+
+  container.innerHTML = boxeadores.map(b => `
+    <div class="boxer-row ${b.baja ? 'baja' : ''}" onclick="showPerfil('${b.id}')">
+      <div class="boxer-row-info">
+        <div class="boxer-name">${esc(b.nombre)}</div>
+        <div class="boxer-sub">${esc(b.gimnasio || '—')} · ${b.peso ?? '?'}kg · ${b.peleas ?? 0} peleas · ${esc(b.tipo || '')}</div>
+      </div>
+      ${getBadge(b)}
+    </div>
+  `).join('');
+}
+
+// ══════════════════════════════════════════
+//  PERFIL BOXEADOR
+// ══════════════════════════════════════════
+function showPerfil(id) {
+  const b = STATE.boxeadores.find(x => x.id === id);
+  if (!b) return;
+  const pelea = getPeleaActiva(id);
+  let peleaInfo = '';
+  if (pelea) {
+    const r = STATE.boxeadores.find(x => x.id === (pelea.boxeador1_id === id ? pelea.boxeador2_id : pelea.boxeador1_id));
+    peleaInfo = r ? `<div style="margin-top:8px;padding:10px;background:var(--bg3);border-radius:8px;font-size:13px;color:var(--text2)">⚔️ Pelea activa con <strong style="color:var(--text)">${esc(r.nombre)}</strong></div>` : '';
+  }
+
+  document.getElementById('perfil-content').innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">
+      <div class="modal-title" style="margin:0">${esc(b.nombre)}</div>
+      ${getBadge(b)}
+    </div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:16px">${esc(b.tipo || '')} · ${b.sexo === 'M' ? 'Masculino' : 'Femenino'}</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+      <div class="stat-box"><div class="stat-num">${b.edad ?? '?'}</div><div class="stat-label">Edad</div></div>
+      <div class="stat-box"><div class="stat-num">${b.peso ?? '?'}<span style="font-size:14px">kg</span></div><div class="stat-label">Peso</div></div>
+      <div class="stat-box"><div class="stat-num">${b.peleas ?? 0}</div><div class="stat-label">Peleas prev.</div></div>
+      <div class="stat-box" style="grid-column:1/-1;text-align:center"><div style="font-size:15px;font-weight:700">${esc(b.gimnasio || '—')}</div><div class="stat-label">Gimnasio</div></div>
+    </div>
+    ${peleaInfo}
+    <div class="modal-sep"></div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <button class="btn btn-ghost btn-full" onclick="closeModal('modal-perfil');showEditBoxer('${id}')">✏️ Editar</button>
+      ${!b.baja ? `<button class="btn btn-ghost btn-full" onclick="closeModal('modal-perfil');marcarBaja('${id}')">🔴 Marcar baja</button>` : ''}
+      <button class="btn btn-danger btn-full" onclick="closeModal('modal-perfil');eliminarBoxeador('${id}')">🗑️ Eliminar boxeador</button>
+    </div>
+  `;
+  openModal('modal-perfil');
+}
+
+// ══════════════════════════════════════════
+//  ALTA / EDICIÓN BOXEADOR
+// ══════════════════════════════════════════
+function showAddBoxer() {
+  document.getElementById('modal-boxer-title').textContent = 'Agregar boxeador';
+  document.getElementById('boxer-edit-id').value = '';
+  document.getElementById('f-nombre').value = '';
+  document.getElementById('f-edad').value   = '';
+  document.getElementById('f-peso').value   = '';
+  document.getElementById('f-gimnasio').value = '';
+  document.getElementById('f-peleas').value  = '0';
+  document.getElementById('f-sexo').value    = 'M';
+  selectTipoByValue('Exhibición');
+  openModal('modal-boxer');
+}
+
+function showEditBoxer(id) {
+  const b = STATE.boxeadores.find(x => x.id === id);
+  if (!b) return;
+  document.getElementById('modal-boxer-title').textContent = 'Editar boxeador';
+  document.getElementById('boxer-edit-id').value  = id;
+  document.getElementById('f-nombre').value       = b.nombre || '';
+  document.getElementById('f-edad').value         = b.edad   || '';
+  document.getElementById('f-peso').value         = b.peso   || '';
+  document.getElementById('f-gimnasio').value     = b.gimnasio || '';
+  document.getElementById('f-peleas').value       = b.peleas  ?? 0;
+  document.getElementById('f-sexo').value         = b.sexo || 'M';
+  selectTipoByValue(b.tipo || 'Exhibición');
+  openModal('modal-boxer');
+}
+
+function selectTipo(val, el) {
+  document.getElementById('f-tipo').value = val;
+  document.querySelectorAll('#f-tipo-group .radio-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function selectTipoByValue(val) {
+  document.getElementById('f-tipo').value = val;
+  document.querySelectorAll('#f-tipo-group .radio-btn').forEach(b => {
+    b.classList.toggle('active', b.textContent.trim() === val);
+  });
+}
+
+async function saveBoxer() {
+  const id     = document.getElementById('boxer-edit-id').value;
+  const nombre = document.getElementById('f-nombre').value.trim();
+  if (!nombre) { showToast('❌ El nombre es obligatorio'); return; }
+
+  const data = {
+    nombre,
+    edad:     parseInt(document.getElementById('f-edad').value)   || null,
+    peso:     parseFloat(document.getElementById('f-peso').value)  || null,
+    gimnasio: document.getElementById('f-gimnasio').value.trim()  || null,
+    peleas:   parseInt(document.getElementById('f-peleas').value)  || 0,
+    sexo:     document.getElementById('f-sexo').value,
+    tipo:     document.getElementById('f-tipo').value,
+  };
+
+  if (id) {
+    await sb.from('boxeadores').update(data).eq('id', id);
+    showToast('✅ Boxeador actualizado');
+  } else {
+    await sb.from('boxeadores').insert(data);
+    showToast('✅ Boxeador agregado');
+  }
+  closeModal('modal-boxer');
+}
+
+// ══════════════════════════════════════════
+//  MARCAR BAJA
+// ══════════════════════════════════════════
+async function marcarBaja(id) {
+  const b = STATE.boxeadores.find(x => x.id === id);
+  const pelea = getPeleaActiva(id);
+  const msg = pelea
+    ? `¿Marcar baja a ${b.nombre}? Su pelea activa se cancelará.`
+    : `¿Marcar baja a ${b.nombre}?`;
+  showConfirm('Marcar baja', msg, async () => {
+    if (pelea) {
+      await sb.from('peleas').update({ cancelada: true, motivo_cancelacion: 'Baja de boxeador' }).eq('id', pelea.id);
+    }
+    await sb.from('boxeadores').update({ baja: true }).eq('id', id);
+    showToast('🔴 Boxeador dado de baja');
+  }, { dangerLabel: 'Dar de baja' });
+}
+
+// ══════════════════════════════════════════
+//  ELIMINAR BOXEADOR
+// ══════════════════════════════════════════
+async function eliminarBoxeador(id) {
+  const b = STATE.boxeadores.find(x => x.id === id);
+  const pelea = getPeleaActiva(id);
+  const title = 'Eliminar boxeador';
+  const msg = pelea
+    ? `${b.nombre} tiene una pelea activa. Se cancelará antes de eliminar. ¿Continuar?`
+    : `¿Eliminar a ${b.nombre}? Esta acción no se puede deshacer.`;
+  showConfirm(title, msg, async () => {
+    if (pelea) {
+      await sb.from('peleas').update({ cancelada: true, motivo_cancelacion: 'Boxeador eliminado' }).eq('id', pelea.id);
+    }
+    await sb.from('boxeadores').delete().eq('id', id);
+    showToast('🗑️ Boxeador eliminado');
+  }, { dangerLabel: 'Eliminar' });
+}
+
+// ══════════════════════════════════════════
+//  NUEVO EVENTO
+// ══════════════════════════════════════════
+function showNuevoEvento() {
+  showConfirm(
+    '⚠️ Nuevo evento',
+    'Esto borrará TODOS los boxeadores, peleas y bloques. No se puede deshacer.',
+    () => {
+      showConfirm('¿Estás 100% seguro?', 'Se perderán todos los datos del evento actual.', async () => {
+        // Borrar en orden correcto
+        await sb.from('pelea_bloque').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+        await sb.from('peleas').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+        await sb.from('bloques').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+        await sb.from('boxeadores').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+        STATE.matchBase = null;
+        showToast('✅ Evento reseteado');
+      }, { dangerLabel: 'Sí, borrar todo' });
+    },
+    { dangerLabel: 'Continuar' }
+  );
+}
+
+// ══════════════════════════════════════════
+//  TAB: MATCH — selector de base
+// ══════════════════════════════════════════
+function renderMatchSelect() {
+  const search  = (document.getElementById('match-search')?.value || '').toLowerCase();
+  const pesoMin = parseFloat(document.getElementById('match-peso-min')?.value) || null;
+  const pesoMax = parseFloat(document.getElementById('match-peso-max')?.value) || null;
+  const gym     = document.getElementById('match-gym-filter')?.value || '';
+  const estado  = document.getElementById('match-estado-filter')?.value || '';
+
+  let boxeadores = STATE.boxeadores.filter(b => !b.baja);
+
+  if (search)   boxeadores = boxeadores.filter(b => b.nombre?.toLowerCase().includes(search));
+  if (pesoMin)  boxeadores = boxeadores.filter(b => (b.peso || 0) >= pesoMin);
+  if (pesoMax)  boxeadores = boxeadores.filter(b => (b.peso || 0) <= pesoMax);
+  if (gym)      boxeadores = boxeadores.filter(b => b.gimnasio === gym);
+  if (estado === 'libre')      boxeadores = boxeadores.filter(b => !getPeleaActiva(b.id));
+  if (estado === 'emparejado') boxeadores = boxeadores.filter(b => !!getPeleaActiva(b.id));
+
+  boxeadores.sort((a, b) => (a.nombre||'').localeCompare(b.nombre||''));
+
+  const container = document.getElementById('match-boxer-list');
+  if (!boxeadores.length) {
+    container.innerHTML = `<div class="empty-state"><p>No hay boxeadores con esos filtros</p></div>`;
+    return;
+  }
+  container.innerHTML = boxeadores.map(b => `
+    <div class="boxer-row" onclick="selectMatchBase('${b.id}')">
+      <div class="boxer-row-info">
+        <div class="boxer-name">${esc(b.nombre)}</div>
+        <div class="boxer-sub">${esc(b.gimnasio || '—')} · ${b.peso ?? '?'}kg · ${b.edad ?? '?'} años · ${b.peleas ?? 0} peleas</div>
+      </div>
+      ${getBadge(b)}
+    </div>
+  `).join('');
+}
+
+function selectMatchBase(id) {
+  STATE.matchBase = id;
+  const b = STATE.boxeadores.find(x => x.id === id);
+  if (!b) return;
+
+  document.getElementById('match-sticky-name').innerHTML = `${esc(b.nombre)} &nbsp; ${getBadge(b)}`;
+  document.getElementById('match-sticky-info').textContent =
+    `${b.peso ?? '?'}kg · ${b.edad ?? '?'} años · ${b.peleas ?? 0} peleas · ${b.gimnasio || '—'} · ${b.tipo || ''}`;
+
+  document.getElementById('match-select-panel').style.display = 'none';
+  const rivalPanel = document.getElementById('match-rival-panel');
+  rivalPanel.style.display = 'flex';
+  rivalPanel.style.flexDirection = 'column';
+  rivalPanel.style.flex = '1';
+  rivalPanel.style.overflow = 'hidden';
+
+  renderRivales();
+}
+
+function clearMatchBase() {
+  STATE.matchBase = null;
+  document.getElementById('match-select-panel').style.display = '';
+  document.getElementById('match-rival-panel').style.display = 'none';
+  renderMatchSelect();
+}
+
+// ══════════════════════════════════════════
+//  TAB: MATCH — lista de rivales
+// ══════════════════════════════════════════
+function calcScore(b1, b2) {
+  const diffPeso   = Math.abs((b1.peso   || 0) - (b2.peso   || 0));
+  const diffPeleas = Math.abs((b1.peleas || 0) - (b2.peleas || 0));
+  return 0.6 * (1 / (1 + diffPeso)) + 0.4 * (1 / (1 + diffPeleas));
+}
+
+function getDiscardReason(base, rival) {
+  if (rival.id === base.id) return 'Es el mismo boxeador';
+  if (rival.baja) return 'Boxeador dado de baja';
+  if (base.sexo && rival.sexo && base.sexo !== rival.sexo) return 'Distinto sexo';
+  if (base.gimnasio && rival.gimnasio && base.gimnasio === rival.gimnasio) return 'Mismo gimnasio';
+  const edadBase  = base.edad  || 0;
+  const edadRival = rival.edad || 0;
+  const baseMenor  = edadBase  < 18;
+  const rivalMenor = edadRival < 18;
+  if (baseMenor !== rivalMenor) return 'Menor vs adulto';
+  if (baseMenor && rivalMenor && Math.abs(edadBase - edadRival) > 2) return 'Menores con más de 2 años de diferencia';
+  return null;
+}
+
+function renderRivales() {
+  const base = STATE.boxeadores.find(x => x.id === STATE.matchBase);
+  if (!base) return;
+
+  const rSearch  = (document.getElementById('rival-search')?.value || '').toLowerCase();
+  const rPesoMin = parseFloat(document.getElementById('rival-peso-min')?.value) || null;
+  const rPesoMax = parseFloat(document.getElementById('rival-peso-max')?.value) || null;
+  const rGym     = document.getElementById('rival-gym-filter')?.value || '';
+  const rEstado  = document.getElementById('rival-estado-filter')?.value || '';
+
+  const discarded = [];
+  let candidates = [];
+
+  STATE.boxeadores.forEach(rival => {
+    const reason = getDiscardReason(base, rival);
+    if (reason) { discarded.push({ rival, reason }); return; }
+
+    // Aplicar filtros solo a los no descartados
+    if (rSearch  && !rival.nombre?.toLowerCase().includes(rSearch))         return;
+    if (rPesoMin && (rival.peso || 0) < rPesoMin)                           return;
+    if (rPesoMax && (rival.peso || 0) > rPesoMax)                           return;
+    if (rGym     && rival.gimnasio !== rGym)                                 return;
+    if (rEstado === 'libre'      && getPeleaActiva(rival.id))                return;
+    if (rEstado === 'emparejado' && !getPeleaActiva(rival.id))               return;
+
+    candidates.push({ rival, score: calcScore(base, rival) });
+  });
+
+  candidates.sort((a, b) => b.score - a.score);
+
+  const container = document.getElementById('match-rival-list');
+  let html = '';
+
+  if (!candidates.length) {
+    html += `<div class="empty-state"><p>No hay rivales compatibles con esos filtros</p></div>`;
+  } else {
+    html += candidates.map(({ rival, score }) => {
+      const pct = Math.round(score * 100);
+      const pelea = getPeleaActiva(rival.id);
+      const diffPeso   = Math.abs((base.peso   || 0) - (rival.peso   || 0)).toFixed(1);
+      const diffPeleas = Math.abs((base.peleas || 0) - (rival.peleas || 0));
+      return `
+        <div class="rival-row">
+          <div class="rival-row-top">
+            <div>
+              <div class="rival-name">${esc(rival.nombre)}</div>
+              <div class="rival-sub">${esc(rival.gimnasio || '—')} · ${rival.peso ?? '?'}kg · ${rival.edad ?? '?'} años · ${rival.peleas ?? 0} peleas</div>
+            </div>
+            ${pelea ? '<span class="badge badge-emparejado">Ya emparejado</span>' : '<span class="badge badge-libre">Disponible</span>'}
+          </div>
+          <div class="score-bar-wrap">
+            <div class="score-bar-bg"><div class="score-bar-fill" style="width:${pct}%"></div></div>
+            <div class="score-meta">
+              <span>Compatibilidad: <strong>${pct}%</strong></span>
+              <span>Δ${diffPeso}kg &nbsp; Δ${diffPeleas}P</span>
+            </div>
+          </div>
+          <div class="rival-actions">
+            <button class="btn btn-primary btn-sm" onclick="emparejar('${base.id}','${rival.id}')">⚔️ Emparejar</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  if (discarded.length) {
+    html += `<div class="section-label" style="margin-top:16px">Descartados (${discarded.length})</div>`;
+    html += discarded.map(({ rival, reason }) => `
+      <div class="rival-row discarded">
+        <div class="rival-row-top">
+          <div>
+            <div class="rival-name">${esc(rival.nombre)}</div>
+            <div class="rival-sub">${esc(rival.gimnasio || '—')} · ${rival.peso ?? '?'}kg</div>
+          </div>
+        </div>
+        <div class="discard-reason">🚫 ${reason}</div>
+      </div>
+    `).join('');
+  }
+
+  container.innerHTML = html;
+}
+
+// ══════════════════════════════════════════
+//  EMPAREJAR
+// ══════════════════════════════════════════
+async function emparejar(baseId, rivalId) {
+  const pelaRival = getPeleaActiva(rivalId);
+  const pelaBase  = getPeleaActiva(baseId);
+
+  if (pelaRival) {
+    const rival = STATE.boxeadores.find(x => x.id === rivalId);
+    showConfirm(
+      'Rival ya emparejado',
+      `${rival.nombre} ya tiene una pelea activa. ¿Cancelar la anterior y crear una nueva pelea?`,
+      async () => {
+        await cancelarPeleas(pelaBase, pelaRival);
+        await crearPelea(baseId, rivalId);
+      },
+      { dangerLabel: 'Sí, reemplazar' }
+    );
+  } else if (pelaBase) {
+    const base = STATE.boxeadores.find(x => x.id === baseId);
+    showConfirm(
+      'Base ya emparejado',
+      `${base.nombre} ya tiene una pelea activa. ¿Cancelar la anterior y crear una nueva?`,
+      async () => {
+        await cancelarPeleas(pelaBase, null);
+        await crearPelea(baseId, rivalId);
+      },
+      { dangerLabel: 'Sí, reemplazar' }
+    );
+  } else {
+    await crearPelea(baseId, rivalId);
+  }
+}
+
+async function cancelarPeleas(...peleas) {
+  for (const p of peleas) {
+    if (p) await sb.from('peleas').update({ cancelada: true, motivo_cancelacion: 'Reemplazada por nueva pelea' }).eq('id', p.id);
+  }
+}
+
+async function crearPelea(b1Id, b2Id) {
+  const maxOrden = STATE.peleas.reduce((m, p) => Math.max(m, p.orden || 0), 0);
+  await sb.from('peleas').insert({ boxeador1_id: b1Id, boxeador2_id: b2Id, orden: maxOrden + 1, cancelada: false });
+  showToast('✅ Pelea creada');
+  switchTab('peleas');
+}
+
+// ══════════════════════════════════════════
+//  TAB: PELEAS
+// ══════════════════════════════════════════
+function renderPeleas() {
+  destroySortables();
+  const container = document.getElementById('peleas-content');
+
+  const activas    = STATE.peleas.filter(p => !p.cancelada);
+  const canceladas = STATE.peleas.filter(p => p.cancelada);
+
+  if (!activas.length && !canceladas.length) {
+    container.innerHTML = `<div class="empty-state"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z"/></svg><p>No hay peleas todavía</p></div>`;
+    return;
+  }
+
+  // Agrupar activas por bloque
+  const bloqueMap = {};
+  STATE.bloques.sort((a, b) => (a.orden||0) - (b.orden||0)).forEach(bl => { bloqueMap[bl.id] = { bloque: bl, peleas: [] }; });
+  const sinBloque = [];
+
+  activas.forEach(pelea => {
+    const pb = STATE.peleasBloques.find(x => x.pelea_id === pelea.id);
+    if (pb && bloqueMap[pb.bloque_id]) {
+      bloqueMap[pb.bloque_id].peleas.push({ pelea, pos: pb.posicion || 0 });
+    } else {
+      sinBloque.push(pelea);
+    }
+  });
+
+  // Ordenar peleas dentro de cada bloque
+  Object.values(bloqueMap).forEach(g => g.peleas.sort((a, b) => a.pos - b.pos));
+  sinBloque.sort((a, b) => (a.orden||0) - (b.orden||0));
+
+  let html = '<div id="bloques-sortable-container">';
+
+  // Secciones con bloque
+  Object.values(bloqueMap).forEach(({ bloque, peleas: bp }) => {
+    html += `
+      <div class="bloque-section" data-bloque-id="${bloque.id}">
+        <div class="bloque-header">
+          <span><span class="handle">☰</span>${esc(bloque.nombre || '?')}</span>
+          <span style="font-size:12px;color:var(--text2);font-weight:400">${bp.length} pelea${bp.length !== 1 ? 's' : ''}</span>
+        </div>
+        <div class="bloque-list pelea-sortable" data-bloque-id="${bloque.id}">
+          ${bp.map(({ pelea }) => peleaItemHTML(pelea)).join('')}
+        </div>
+      </div>`;
+  });
+
+  html += '</div>';
+
+  // Sin bloque
+  html += `
+    <div class="bloque-section" style="margin-top:${Object.keys(bloqueMap).length ? '16px' : '0'}">
+      <div class="bloque-header" style="cursor:default;background:var(--bg2)">
+        <span>Sin bloque</span>
+        <span style="font-size:12px;color:var(--text2);font-weight:400">${sinBloque.length} pelea${sinBloque.length !== 1 ? 's' : ''}</span>
+      </div>
+      <div class="bloque-list pelea-sortable" data-bloque-id="">
+        ${sinBloque.map(p => peleaItemHTML(p)).join('')}
+      </div>
+    </div>`;
+
+  // Canceladas
+  if (canceladas.length) {
+    html += `<div class="canceladas-section"><div class="section-label">Canceladas (${canceladas.length})</div>`;
+    html += canceladas.map(p => {
+      const [b1, b2] = getPeleaBoxeadores(p);
+      return `
+        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px;opacity:.4">
+          <div style="font-weight:600;font-size:14px">${esc(b1?.nombre || '?')} vs ${esc(b2?.nombre || '?')}</div>
+          ${p.motivo_cancelacion ? `<div style="font-size:12px;color:var(--text2);margin-top:4px">Motivo: ${esc(p.motivo_cancelacion)}</div>` : ''}
+        </div>`;
+    }).join('');
+    html += '</div>';
+  }
+
+  container.innerHTML = html;
+  initSortables();
+}
+
+function getPeleaBoxeadores(pelea) {
+  return [
+    STATE.boxeadores.find(b => b.id === pelea.boxeador1_id),
+    STATE.boxeadores.find(b => b.id === pelea.boxeador2_id),
+  ];
+}
+
+function peleaItemHTML(pelea) {
+  const [b1, b2] = getPeleaBoxeadores(pelea);
+  const pb = STATE.peleasBloques.find(x => x.pelea_id === pelea.id);
+  const bloqueOpts = STATE.bloques.map(bl =>
+    `<option value="${bl.id}" ${pb?.bloque_id === bl.id ? 'selected' : ''}>${esc(bl.nombre)}</option>`
+  ).join('');
+  return `
+    <div class="pelea-item" data-pelea-id="${pelea.id}">
+      <div class="pelea-handle">☰</div>
+      <div class="pelea-info">
+        <div class="pelea-names">${esc(b1?.nombre || '?')} vs ${esc(b2?.nombre || '?')}</div>
+        <div class="pelea-detail">
+          ${b1 ? `${b1.peso ?? '?'}kg · ${b1.edad ?? '?'}a · ${esc(b1.gimnasio || '—')}` : ''}<br>
+          ${b2 ? `${b2.peso ?? '?'}kg · ${b2.edad ?? '?'}a · ${esc(b2.gimnasio || '—')}` : ''}
+        </div>
+        <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">
+          <button class="btn btn-ghost btn-sm" onclick="showAssignBloque('${pelea.id}')">📅 Bloque</button>
+          <button class="btn btn-ghost btn-sm" onclick="reasignarBoxeador('${pelea.id}',1)">↔ B1</button>
+          <button class="btn btn-ghost btn-sm" onclick="reasignarBoxeador('${pelea.id}',2)">↔ B2</button>
+          <button class="btn btn-danger btn-sm" onclick="cancelarPelea('${pelea.id}')">✕</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+// ══════════════════════════════════════════
+//  DRAG & DROP — Sortable.js
+// ══════════════════════════════════════════
+function initSortables() {
+  // Drag de bloques enteros
+  const bloqueContainer = document.getElementById('bloques-sortable-container');
+  if (bloqueContainer) {
+    const s = Sortable.create(bloqueContainer, {
+      handle: '.bloque-header',
+      animation: 150,
+      ghostClass: 'sortable-ghost',
+      dragClass: 'sortable-drag',
+      onEnd: onBloqueReorder,
+    });
+    _sortableInstances.push(s);
+  }
+
+  // Drag de peleas dentro de bloques (cross-bloque)
+  document.querySelectorAll('.pelea-sortable').forEach(list => {
+    const s = Sortable.create(list, {
+      group: 'peleas',
+      handle: '.pelea-handle',
+      animation: 150,
+      ghostClass: 'sortable-ghost',
+      dragClass: 'sortable-drag',
+      onEnd: onPeleaReorder,
+    });
+    _sortableInstances.push(s);
+  });
+}
+
+function destroySortables() {
+  _sortableInstances.forEach(s => { try { s.destroy(); } catch(e) {} });
+  _sortableInstances = [];
+}
+
+async function onBloqueReorder(evt) {
+  const container = document.getElementById('bloques-sortable-container');
+  if (!container) return;
+  const sections = [...container.querySelectorAll('.bloque-section[data-bloque-id]')];
+  const updates  = sections.map((el, i) => ({ id: el.dataset.bloqueId, orden: i }));
+  for (const u of updates) {
+    await sb.from('bloques').update({ orden: u.orden }).eq('id', u.id);
+  }
+}
+
+async function onPeleaReorder(evt) {
+  const targetList  = evt.to;
+  const targetBloque= targetList.dataset.bloqueId;
+  const peleaId     = evt.item.dataset.peleaId;
+
+  if (!peleaId) return;
+
+  // Determinar el bloque destino
+  const pb = STATE.peleasBloques.find(x => x.pelea_id === peleaId);
+
+  if (targetBloque) {
+    // Mover a bloque
+    if (pb && pb.bloque_id === targetBloque) {
+      // Solo actualizar posición
+    } else if (pb) {
+      await sb.from('pelea_bloque').update({ bloque_id: targetBloque }).eq('id', pb.id);
+    } else {
+      await sb.from('pelea_bloque').insert({ pelea_id: peleaId, bloque_id: targetBloque });
+    }
+    // Actualizar posiciones dentro del bloque
+    const items = [...targetList.querySelectorAll('.pelea-item')];
+    for (let i = 0; i < items.length; i++) {
+      const pid = items[i].dataset.peleaId;
+      const existingPb = STATE.peleasBloques.find(x => x.pelea_id === pid && x.bloque_id === targetBloque);
+      if (existingPb) await sb.from('pelea_bloque').update({ posicion: i }).eq('id', existingPb.id);
+    }
+  } else {
+    // Mover a "Sin bloque"
+    if (pb) await sb.from('pelea_bloque').delete().eq('id', pb.id);
+    // Actualizar orden en peleas
+    const items = [...targetList.querySelectorAll('.pelea-item')];
+    for (let i = 0; i < items.length; i++) {
+      await sb.from('peleas').update({ orden: i }).eq('id', items[i].dataset.peleaId);
+    }
+  }
+  await loadAll();
+}
+
+// ══════════════════════════════════════════
+//  ACCIONES DE PELEAS
+// ══════════════════════════════════════════
+function cancelarPelea(id) {
+  showConfirm('Cancelar pelea', '¿Cancelar esta pelea? Ambos boxeadores quedarán libres.', async () => {
+    const motivo = document.getElementById('confirm-motivo').value.trim() || 'Cancelada manualmente';
+    await sb.from('peleas').update({ cancelada: true, motivo_cancelacion: motivo }).eq('id', id);
+    showToast('Pelea cancelada');
+  }, { showMotivo: true, dangerLabel: 'Cancelar pelea' });
+}
+
+function reasignarBoxeador(peleaId, slot) {
+  // Buscar quién está en ese slot
+  const pelea = STATE.peleas.find(p => p.id === peleaId);
+  if (!pelea) return;
+  const boxeadorId = slot === 1 ? pelea.boxeador1_id : pelea.boxeador2_id;
+  STATE.matchBase = boxeadorId;
+  switchTab('match');
+  // Mostrar rival panel preseleccionado
+  selectMatchBase(boxeadorId);
+  // Al emparejar en match se cancela la pelea vieja automáticamente
+}
+
+function showAssignBloque(peleaId) {
+  document.getElementById('assign-pelea-id').value = peleaId;
+  const pb = STATE.peleasBloques.find(x => x.pelea_id === peleaId);
+  const opts = STATE.bloques.map(bl =>
+    `<option value="${bl.id}" ${pb?.bloque_id === bl.id ? 'selected' : ''}>${esc(bl.nombre)}</option>`
+  ).join('');
+  document.getElementById('assign-bloque-sel').innerHTML =
+    `<option value="">Sin bloque</option>` + opts;
+  openModal('modal-assign-bloque');
+}
+
+async function doAssignBloque() {
+  const peleaId  = document.getElementById('assign-pelea-id').value;
+  const bloqueId = document.getElementById('assign-bloque-sel').value;
+  const pb = STATE.peleasBloques.find(x => x.pelea_id === peleaId);
+
+  if (bloqueId) {
+    const maxPos = STATE.peleasBloques.filter(x => x.bloque_id === bloqueId)
+      .reduce((m, x) => Math.max(m, x.posicion || 0), -1);
+    if (pb) {
+      await sb.from('pelea_bloque').update({ bloque_id: bloqueId, posicion: maxPos + 1 }).eq('id', pb.id);
+    } else {
+      await sb.from('pelea_bloque').insert({ pelea_id: peleaId, bloque_id: bloqueId, posicion: maxPos + 1 });
+    }
+  } else {
+    if (pb) await sb.from('pelea_bloque').delete().eq('id', pb.id);
+  }
+
+  closeModal('modal-assign-bloque');
+  showToast('✅ Bloque asignado');
+}
+
+// ══════════════════════════════════════════
+//  EXPORTAR CSV
+// ══════════════════════════════════════════
+function exportCSV() {
+  const activas = STATE.peleas.filter(p => !p.cancelada);
+
+  // Ordenar igual que en pantalla
+  const rows = [];
+  let orden = 1;
+
+  STATE.bloques.sort((a, b) => (a.orden||0) - (b.orden||0)).forEach(bl => {
+    const enBloque = STATE.peleasBloques
+      .filter(pb => pb.bloque_id === bl.id)
+      .sort((a, b) => (a.posicion||0) - (b.posicion||0));
+    enBloque.forEach(pb => {
+      const pelea = activas.find(p => p.id === pb.pelea_id);
+      if (pelea) rows.push({ pelea, bloque: bl.nombre, orden: orden++ });
+    });
+  });
+
+  activas.forEach(pelea => {
+    if (!STATE.peleasBloques.find(pb => pb.pelea_id === pelea.id)) {
+      rows.push({ pelea, bloque: 'Sin bloque', orden: orden++ });
+    }
+  });
+
+  const header = ['Orden','Bloque','B1 Nombre','B1 Peso (kg)','B1 Edad','B1 Gimnasio','B2 Nombre','B2 Peso (kg)','B2 Edad','B2 Gimnasio'];
+  const lines = [header.join(',')];
+
+  rows.forEach(({ pelea, bloque, orden: ord }) => {
+    const b1 = STATE.boxeadores.find(x => x.id === pelea.boxeador1_id);
+    const b2 = STATE.boxeadores.find(x => x.id === pelea.boxeador2_id);
+    const csvCell = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
+    lines.push([
+      ord,
+      csvCell(bloque),
+      csvCell(b1?.nombre), b1?.peso ?? '', b1?.edad ?? '', csvCell(b1?.gimnasio),
+      csvCell(b2?.nombre), b2?.peso ?? '', b2?.edad ?? '', csvCell(b2?.gimnasio),
+    ].join(','));
+  });
+
+  const BOM = '﻿';
+  const csv = BOM + lines.join('\r\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = 'peleas_evento.csv';
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('📥 CSV descargado');
+}
+
+// ══════════════════════════════════════════
+//  TAB: BLOQUES
+// ══════════════════════════════════════════
+function renderBloques() {
+  const container = document.getElementById('bloques-content');
+  if (!STATE.bloques.length) {
+    container.innerHTML = `<div class="empty-state"><p>No hay bloques. Agregá el primero.</p></div>`;
+    return;
+  }
+
+  const sorted = [...STATE.bloques].sort((a, b) => (a.orden||0) - (b.orden||0));
+  container.innerHTML = `<div id="bloques-list-sortable">` + sorted.map(bl => {
+    const peleasEnBloque = STATE.peleasBloques.filter(pb => pb.bloque_id === bl.id).length;
+    return `
+      <div class="bloque-card" data-bloque-id="${bl.id}">
+        <div class="bloque-card-handle">☰</div>
+        <div class="bloque-card-info">
+          <div class="bloque-card-name">${esc(bl.nombre || '?')}</div>
+          <div class="bloque-card-sub">${peleasEnBloque} pelea${peleasEnBloque !== 1 ? 's' : ''} asignada${peleasEnBloque !== 1 ? 's' : ''}</div>
+        </div>
+        <button class="btn btn-danger btn-sm btn-icon" onclick="eliminarBloque('${bl.id}')">🗑</button>
+      </div>`;
+  }).join('') + '</div>';
+
+  // Sortable para bloques
+  const list = document.getElementById('bloques-list-sortable');
+  if (list) {
+    Sortable.create(list, {
+      handle: '.bloque-card-handle',
+      animation: 150,
+      ghostClass: 'sortable-ghost',
+      onEnd: async () => {
+        const items = [...list.querySelectorAll('.bloque-card')];
+        for (let i = 0; i < items.length; i++) {
+          await sb.from('bloques').update({ orden: i }).eq('id', items[i].dataset.bloqueId);
+        }
+        await loadAll();
+      },
+    });
+  }
+}
+
+function showAddBloque() { openModal('modal-bloque'); }
+
+async function saveBloque() {
+  const inicio = document.getElementById('b-inicio').value;
+  const fin    = document.getElementById('b-fin').value;
+  if (!inicio || !fin) { showToast('❌ Ingresá hora inicio y fin'); return; }
+  const nombre = `${inicio} - ${fin}`;
+  const maxOrden = STATE.bloques.reduce((m, b) => Math.max(m, b.orden||0), -1);
+  await sb.from('bloques').insert({ nombre, hora_inicio: inicio, hora_fin: fin, orden: maxOrden + 1 });
+  document.getElementById('b-inicio').value = '';
+  document.getElementById('b-fin').value    = '';
+  closeModal('modal-bloque');
+  showToast('✅ Bloque creado');
+}
+
+async function eliminarBloque(id) {
+  const bl = STATE.bloques.find(x => x.id === id);
+  const count = STATE.peleasBloques.filter(pb => pb.bloque_id === id).length;
+  const msg = count
+    ? `¿Eliminar el bloque "${bl.nombre}"? Las ${count} peleas asignadas quedarán "Sin bloque".`
+    : `¿Eliminar el bloque "${bl.nombre}"?`;
+  showConfirm('Eliminar bloque', msg, async () => {
+    await sb.from('pelea_bloque').delete().eq('bloque_id', id);
+    await sb.from('bloques').delete().eq('id', id);
+    showToast('🗑️ Bloque eliminado');
+  }, { dangerLabel: 'Eliminar' });
+}
+
+// ══════════════════════════════════════════
+//  ARRANCAR
+// ══════════════════════════════════════════
+init();
+</script>
+</body>
+</html>
