@@ -3,6 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
   <title>Boxing Matchmaker</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
@@ -560,11 +563,9 @@ function updatePinDots(error = false) {
 function checkPin() {
   if (_pinBuffer === PIN_EDITOR) {
     _modoLector = false;
-    sessionStorage.setItem('boxing-pin-v2', 'editor');
     enterApp();
   } else if (_pinBuffer === PIN_LECTOR) {
     _modoLector = true;
-    sessionStorage.setItem('boxing-pin-v2', 'lector');
     enterApp();
   } else {
     updatePinDots(true);
@@ -582,21 +583,7 @@ function enterApp() {
   init();
 }
 
-// Verificar sesión guardada
-(function checkSession() {
-  const saved = sessionStorage.getItem('boxing-pin-v2');
-  if (saved === 'editor') {
-    _modoLector = false;
-    document.getElementById('pin-screen').classList.add('hidden');
-    init();
-  } else if (saved === 'lector') {
-    _modoLector = true;
-    document.body.classList.add('modo-lector');
-    document.getElementById('pin-screen').classList.add('hidden');
-    init();
-  }
-  // Si no hay sesión, el pin-screen queda visible
-})();
+// PIN requerido en cada apertura — sin sessionStorage
 
 // ══════════════════════════════════════════
 //  ESTADO GLOBAL
