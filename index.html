@@ -16,18 +16,39 @@
       --border: #333;
       --text: #f0f0f0;
       --text2: #aaa;
-      --text3: #666;
+      --text3: #555;
       --accent: #3b82f6;
       --accent-hover: #2563eb;
       --green: #22c55e;
       --yellow: #eab308;
       --red: #ef4444;
       --gray: #555;
+      --orange: #f97316;
+      --orange2: #ea6c0a;
       --nav-h: 64px;
       --header-h: 56px;
     }
-    html, body { height: 100%; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 15px; line-height: 1.4; overflow: hidden; }
-    #app { display: flex; flex-direction: column; height: 100vh; }
+    body.light {
+      --bg: #f4f4f5;
+      --bg2: #ffffff;
+      --bg3: #e4e4e7;
+      --bg4: #d4d4d8;
+      --border: #d1d5db;
+      --text: #111827;
+      --text2: #6b7280;
+      --text3: #9ca3af;
+      --accent: #2563eb;
+      --accent-hover: #1d4ed8;
+      --green: #16a34a;
+      --yellow: #ca8a04;
+      --red: #dc2626;
+      --gray: #9ca3af;
+      --orange: #ea6c0a;
+      --orange2: #c2570a;
+    }
+    html { height: 100%; height: -webkit-fill-available; }
+    body { height: 100%; min-height: 100vh; min-height: -webkit-fill-available; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 15px; line-height: 1.4; overflow: hidden; }
+    #app { display: flex; flex-direction: column; height: 100vh; height: 100dvh; position: fixed; inset: 0; }
 
     /* ── NAV ── */
     #bottom-nav { display: flex; background: var(--bg2); border-top: 1px solid var(--border); height: var(--nav-h); flex-shrink: 0; z-index: 100; }
@@ -113,11 +134,12 @@
 
     /* ── PELEAS TAB ── */
     #peleas-content { padding: 10px 16px 80px; flex: 1; overflow-y: auto; }
-    .bloque-section { margin-bottom: 16px; }
-    .bloque-header { background: var(--bg3); border: 1px solid var(--border); border-radius: 10px 10px 0 0; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; font-weight: 700; font-size: 14px; cursor: grab; }
+    .bloque-section { margin-bottom: 18px; }
+    .bloque-header { background: linear-gradient(135deg, var(--orange) 0%, var(--orange2) 100%); border: none; border-radius: 12px 12px 0 0; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; font-weight: 800; font-size: 14px; cursor: grab; color: #fff; letter-spacing: .3px; box-shadow: 0 2px 8px rgba(249,115,22,.35); }
     .bloque-header:active { cursor: grabbing; }
-    .bloque-header .handle { color: var(--text3); margin-right: 8px; }
-    .bloque-list { border: 1px solid var(--border); border-top: none; border-radius: 0 0 10px 10px; min-height: 10px; }
+    .bloque-header .handle { color: rgba(255,255,255,.6); margin-right: 8px; }
+    .bloque-header-count { background: rgba(0,0,0,.2); border-radius: 999px; padding: 2px 10px; font-size: 12px; font-weight: 700; color: #fff; }
+    .bloque-list { border: 2px solid var(--orange); border-top: none; border-radius: 0 0 12px 12px; min-height: 10px; overflow: hidden; }
     .pelea-item { background: var(--bg2); padding: 12px 14px; border-bottom: 1px solid var(--border); display: flex; gap: 10px; align-items: flex-start; }
     .pelea-item:last-child { border-bottom: none; border-radius: 0 0 10px 10px; }
     .pelea-handle { color: var(--text3); cursor: grab; font-size: 18px; padding-top: 2px; flex-shrink: 0; }
@@ -132,11 +154,11 @@
 
     /* ── BLOQUES TAB ── */
     #bloques-content { padding: 12px 16px 80px; flex: 1; overflow-y: auto; }
-    .bloque-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 10px; display: flex; align-items: center; gap: 12px; }
-    .bloque-card-handle { color: var(--text3); cursor: grab; font-size: 20px; flex-shrink: 0; }
+    .bloque-card { background: linear-gradient(135deg, var(--orange) 0%, var(--orange2) 100%); border: none; border-radius: 14px; padding: 14px 16px; margin-bottom: 12px; display: flex; align-items: center; gap: 12px; box-shadow: 0 3px 10px rgba(249,115,22,.3); color: #fff; }
+    .bloque-card-handle { color: rgba(255,255,255,.6); cursor: grab; font-size: 20px; flex-shrink: 0; }
     .bloque-card-info { flex: 1; }
-    .bloque-card-name { font-weight: 700; font-size: 16px; }
-    .bloque-card-sub { font-size: 12px; color: var(--text2); margin-top: 3px; }
+    .bloque-card-name { font-weight: 800; font-size: 16px; color: #fff; }
+    .bloque-card-sub { font-size: 12px; color: rgba(255,255,255,.75); margin-top: 3px; }
 
     /* ── FORM ── */
     .form-group { margin-bottom: 14px; }
@@ -152,9 +174,10 @@
     /* ── MODAL ── */
     .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.7); z-index: 200; align-items: flex-end; justify-content: center; }
     .modal-overlay.open { display: flex; }
-    .modal-box { background: var(--bg2); border-radius: 20px 20px 0 0; width: 100%; max-width: 540px; max-height: 92vh; overflow-y: auto; padding: 20px 20px 40px; }
+    .modal-box { background: var(--bg2); border-radius: 20px 20px 0 0; width: 100%; max-width: 540px; max-height: 92vh; overflow-y: auto; padding: 20px 20px 40px; position: relative; }
     .modal-handle { width: 40px; height: 4px; background: var(--bg4); border-radius: 99px; margin: 0 auto 16px; }
-    .modal-title { font-size: 18px; font-weight: 800; margin-bottom: 16px; }
+    .modal-close { position: absolute; top: 16px; right: 16px; width: 32px; height: 32px; border-radius: 50%; border: none; background: var(--bg4); color: var(--text2); font-size: 18px; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .modal-title { font-size: 18px; font-weight: 800; margin-bottom: 16px; padding-right: 36px; }
     .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
     .modal-actions .btn { flex: 1; }
     .modal-sep { height: 1px; background: var(--border); margin: 16px 0; }
@@ -188,7 +211,10 @@
   <div id="tab-boxeadores" class="tab-panel active">
     <div class="tab-header">
       <span class="tab-title">🥊 Boxeadores</span>
-      <button class="btn btn-primary btn-sm" onclick="showAddBoxer()">+ Agregar</button>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button class="btn btn-ghost btn-sm btn-icon" id="theme-toggle" onclick="toggleTheme()" title="Cambiar tema" style="font-size:18px">🌙</button>
+        <button class="btn btn-primary btn-sm" onclick="showAddBoxer()">+ Agregar</button>
+      </div>
     </div>
     <div id="stats-bar">
       <div class="stat-box"><div class="stat-num" id="stat-total">0</div><div class="stat-label">Total</div></div>
@@ -305,9 +331,10 @@
 <!-- ═══════════ MODALES ═══════════ -->
 
 <!-- Modal: Agregar/Editar boxeador -->
-<div class="modal-overlay" id="modal-boxer">
-  <div class="modal-box">
+<div class="modal-overlay" id="modal-boxer" onclick="closeModal('modal-boxer')">
+  <div class="modal-box" onclick="event.stopPropagation()">
     <div class="modal-handle"></div>
+    <button class="modal-close" onclick="closeModal('modal-boxer')">×</button>
     <div class="modal-title" id="modal-boxer-title">Agregar boxeador</div>
     <input type="hidden" id="boxer-edit-id" />
     <div class="form-group">
@@ -346,8 +373,6 @@
       <div class="radio-group" id="f-tipo-group">
         <button class="radio-btn active" onclick="selectTipo('Exhibición',this)">Exhibición</button>
         <button class="radio-btn" onclick="selectTipo('Amateur',this)">Amateur</button>
-        <button class="radio-btn" onclick="selectTipo('Debutante',this)">Debutante</button>
-        <button class="radio-btn" onclick="selectTipo('Elite',this)">Elite</button>
       </div>
       <input type="hidden" id="f-tipo" value="Exhibición" />
     </div>
@@ -359,17 +384,19 @@
 </div>
 
 <!-- Modal: Perfil boxeador -->
-<div class="modal-overlay" id="modal-perfil">
-  <div class="modal-box">
+<div class="modal-overlay" id="modal-perfil" onclick="closeModal('modal-perfil')">
+  <div class="modal-box" onclick="event.stopPropagation()">
     <div class="modal-handle"></div>
+    <button class="modal-close" onclick="closeModal('modal-perfil')">×</button>
     <div id="perfil-content"></div>
   </div>
 </div>
 
 <!-- Modal: Confirmación genérica -->
-<div class="modal-overlay" id="modal-confirm">
-  <div class="modal-box">
+<div class="modal-overlay" id="modal-confirm" onclick="closeModal('modal-confirm')">
+  <div class="modal-box" onclick="event.stopPropagation()">
     <div class="modal-handle"></div>
+    <button class="modal-close" onclick="closeModal('modal-confirm')">×</button>
     <div class="modal-title" id="confirm-title">¿Confirmar?</div>
     <p id="confirm-body" style="color:var(--text2);font-size:15px;margin-bottom:6px"></p>
     <div class="form-group" id="confirm-motivo-wrap" style="display:none;margin-top:12px">
@@ -384,9 +411,10 @@
 </div>
 
 <!-- Modal: Agregar bloque -->
-<div class="modal-overlay" id="modal-bloque">
-  <div class="modal-box">
+<div class="modal-overlay" id="modal-bloque" onclick="closeModal('modal-bloque')">
+  <div class="modal-box" onclick="event.stopPropagation()">
     <div class="modal-handle"></div>
+    <button class="modal-close" onclick="closeModal('modal-bloque')">×</button>
     <div class="modal-title">Agregar bloque</div>
     <div class="form-row">
       <div class="form-group">
@@ -406,9 +434,10 @@
 </div>
 
 <!-- Modal: Asignar bloque a pelea -->
-<div class="modal-overlay" id="modal-assign-bloque">
-  <div class="modal-box">
+<div class="modal-overlay" id="modal-assign-bloque" onclick="closeModal('modal-assign-bloque')">
+  <div class="modal-box" onclick="event.stopPropagation()">
     <div class="modal-handle"></div>
+    <button class="modal-close" onclick="closeModal('modal-assign-bloque')">×</button>
     <div class="modal-title">Asignar bloque</div>
     <input type="hidden" id="assign-pelea-id" />
     <div class="form-group">
@@ -455,6 +484,9 @@ async function init() {
   subscribeRealtime();
   hideLoader();
   render();
+  // Sincronizar ícono de tema
+  const btn = document.getElementById('theme-toggle');
+  if (btn) btn.textContent = document.body.classList.contains('light') ? '☀️' : '🌙';
 }
 
 async function loadAll() {
@@ -999,6 +1031,28 @@ async function crearPelea(b1Id, b2Id) {
 // ══════════════════════════════════════════
 //  TAB: PELEAS
 // ══════════════════════════════════════════
+
+// Devuelve un Map: peleaId → número global (1, 2, 3...)
+// Orden: bloques (por orden de bloque → posición dentro), luego sin bloque
+function buildPeleaOrdenMap() {
+  const activas = STATE.peleas.filter(p => !p.cancelada);
+  const map = new Map();
+  let n = 1;
+  STATE.bloques.slice().sort((a, b) => (a.orden||0) - (b.orden||0)).forEach(bl => {
+    STATE.peleasBloques
+      .filter(pb => pb.bloque_id === bl.id)
+      .sort((a, b) => (a.posicion||0) - (b.posicion||0))
+      .forEach(pb => {
+        if (activas.find(p => p.id === pb.pelea_id)) map.set(pb.pelea_id, n++);
+      });
+  });
+  activas
+    .filter(p => !STATE.peleasBloques.find(pb => pb.pelea_id === p.id))
+    .sort((a, b) => (a.orden||0) - (b.orden||0))
+    .forEach(p => map.set(p.id, n++));
+  return map;
+}
+
 function renderPeleas() {
   destroySortables();
   const container = document.getElementById('peleas-content');
@@ -1029,6 +1083,7 @@ function renderPeleas() {
   Object.values(bloqueMap).forEach(g => g.peleas.sort((a, b) => a.pos - b.pos));
   sinBloque.sort((a, b) => (a.orden||0) - (b.orden||0));
 
+  const ordenMap = buildPeleaOrdenMap();
   let html = '<div id="bloques-sortable-container">';
 
   // Secciones con bloque
@@ -1037,10 +1092,10 @@ function renderPeleas() {
       <div class="bloque-section" data-bloque-id="${bloque.id}">
         <div class="bloque-header">
           <span><span class="handle">☰</span>${esc(bloque.nombre || '?')}</span>
-          <span style="font-size:12px;color:var(--text2);font-weight:400">${bp.length} pelea${bp.length !== 1 ? 's' : ''}</span>
+          <span class="bloque-header-count">${bp.length} pelea${bp.length !== 1 ? 's' : ''}</span>
         </div>
         <div class="bloque-list pelea-sortable" data-bloque-id="${bloque.id}">
-          ${bp.map(({ pelea }) => peleaItemHTML(pelea)).join('')}
+          ${bp.map(({ pelea }) => peleaItemHTML(pelea, ordenMap)).join('')}
         </div>
       </div>`;
   });
@@ -1055,7 +1110,7 @@ function renderPeleas() {
         <span style="font-size:12px;color:var(--text2);font-weight:400">${sinBloque.length} pelea${sinBloque.length !== 1 ? 's' : ''}</span>
       </div>
       <div class="bloque-list pelea-sortable" data-bloque-id="">
-        ${sinBloque.map(p => peleaItemHTML(p)).join('')}
+        ${sinBloque.map(p => peleaItemHTML(p, ordenMap)).join('')}
       </div>
     </div>`;
 
@@ -1084,17 +1139,15 @@ function getPeleaBoxeadores(pelea) {
   ];
 }
 
-function peleaItemHTML(pelea) {
+function peleaItemHTML(pelea, ordenMap) {
   const [b1, b2] = getPeleaBoxeadores(pelea);
   const pb = STATE.peleasBloques.find(x => x.pelea_id === pelea.id);
-  const bloqueOpts = STATE.bloques.map(bl =>
-    `<option value="${bl.id}" ${pb?.bloque_id === bl.id ? 'selected' : ''}>${esc(bl.nombre)}</option>`
-  ).join('');
+  const num = ordenMap?.get(pelea.id) ?? '';
   return `
     <div class="pelea-item" data-pelea-id="${pelea.id}">
       <div class="pelea-handle">☰</div>
       <div class="pelea-info">
-        <div class="pelea-names">${esc(b1?.nombre || '?')} vs ${esc(b2?.nombre || '?')}</div>
+        <div class="pelea-names"><span style="color:var(--accent);font-size:13px;font-weight:800;margin-right:6px">#${num}</span>${esc(b1?.nombre || '?')} vs ${esc(b2?.nombre || '?')}</div>
         <div class="pelea-detail">
           ${b1 ? `${b1.peso ?? '?'}kg · ${b1.edad ?? '?'}a · ${esc(b1.gimnasio || '—')}` : ''}<br>
           ${b2 ? `${b2.peso ?? '?'}kg · ${b2.edad ?? '?'}a · ${esc(b2.gimnasio || '—')}` : ''}
@@ -1321,7 +1374,7 @@ function renderBloques() {
           <div class="bloque-card-name">${esc(bl.nombre || '?')}</div>
           <div class="bloque-card-sub">${peleasEnBloque} pelea${peleasEnBloque !== 1 ? 's' : ''} asignada${peleasEnBloque !== 1 ? 's' : ''}</div>
         </div>
-        <button class="btn btn-danger btn-sm btn-icon" onclick="eliminarBloque('${bl.id}')">🗑</button>
+        <button style="min-height:36px;min-width:36px;padding:6px;border-radius:8px;border:none;background:rgba(0,0,0,.25);color:#fff;font-size:16px;cursor:pointer" onclick="eliminarBloque('${bl.id}')">🗑</button>
       </div>`;
   }).join('') + '</div>';
 
@@ -1370,6 +1423,24 @@ async function eliminarBloque(id) {
     showToast('🗑️ Bloque eliminado');
   }, { dangerLabel: 'Eliminar' });
 }
+
+// ══════════════════════════════════════════
+//  TEMA CLARO / OSCURO
+// ══════════════════════════════════════════
+function toggleTheme() {
+  const isLight = document.body.classList.toggle('light');
+  document.getElementById('theme-toggle').textContent = isLight ? '☀️' : '🌙';
+  localStorage.setItem('boxing-theme', isLight ? 'light' : 'dark');
+}
+
+// Restaurar tema guardado
+(function() {
+  const saved = localStorage.getItem('boxing-theme');
+  if (saved === 'light') {
+    document.body.classList.add('light');
+    // El botón se renderiza después del init, se actualiza en el primer render
+  }
+})();
 
 // ══════════════════════════════════════════
 //  ARRANCAR
