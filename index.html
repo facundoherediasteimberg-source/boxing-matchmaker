@@ -91,10 +91,13 @@
     .card + .card { margin-top: 10px; }
 
     /* ── STATS ── */
-    #stats-bar { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; padding: 12px 16px; flex-shrink: 0; }
+    #stats-bar { display: grid; grid-template-columns: repeat(5,1fr); gap: 6px; padding: 10px 16px; flex-shrink: 0; }
     .stat-box { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 10px 6px; text-align: center; }
     .stat-num { font-size: 22px; font-weight: 800; }
     .stat-label { font-size: 10px; color: var(--text2); margin-top: 2px; text-transform: uppercase; letter-spacing: .5px; }
+    #stats-bar .stat-num { font-size: 17px; }
+    #stats-bar .stat-label { font-size: 9px; letter-spacing: 0; }
+    #stats-bar .stat-box { padding: 8px 4px; }
 
     /* ── FILTER BAR ── */
     .filter-bar { padding: 8px 16px; display: flex; gap: 8px; flex-shrink: 0; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
@@ -232,6 +235,29 @@
     .empty-state svg { width: 48px; height: 48px; margin-bottom: 12px; }
     .empty-state p { font-size: 15px; }
 
+    /* ── PRESENCE BTN ── */
+    .presence-btn { min-width: 34px; min-height: 34px; padding: 4px; border: none; background: transparent; cursor: pointer; font-size: 18px; flex-shrink: 0; -webkit-tap-highlight-color: transparent; display: flex; align-items: center; justify-content: center; border-radius: 8px; }
+    .presence-btn:active { background: var(--bg3); }
+    body.modo-lector .presence-btn { pointer-events: none; opacity: .5; }
+
+    /* ── MINI MENÚ ── */
+    #mini-menu { position: fixed; z-index: 300; background: var(--bg2); border: 1px solid var(--border); border-radius: 14px; box-shadow: 0 8px 32px rgba(0,0,0,.45); min-width: 190px; overflow: hidden; display: none; }
+    #mini-menu.open { display: block; }
+    .mini-menu-item { display: flex; align-items: center; gap: 10px; padding: 13px 16px; cursor: pointer; font-size: 15px; font-weight: 600; border-bottom: 1px solid var(--border); transition: background .1s; -webkit-tap-highlight-color: transparent; }
+    .mini-menu-item:last-child { border-bottom: none; }
+    .mini-menu-item:active { background: var(--bg3); }
+    .mini-menu-item.active-opt { color: var(--accent); }
+    #mini-menu-backdrop { position: fixed; inset: 0; z-index: 299; display: none; }
+    #mini-menu-backdrop.open { display: block; }
+
+    /* ── ASISTENCIA EN PELEAS ── */
+    .pelea-asistencia { font-size: 13px; margin-top: 6px; padding: 3px 8px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px; font-weight: 600; }
+    .asist-verde { background: rgba(34,197,94,.12); color: var(--green); }
+    .asist-amarillo { background: rgba(234,179,8,.12); color: var(--yellow); }
+    .asist-rojo { background: rgba(239,68,68,.12); color: var(--red); }
+    .asist-gris { background: var(--bg3); color: var(--text3); }
+    .pelea-item.asist-alerta { border-left: 3px solid var(--red); }
+
     /* ── DRAG GHOST ── */
     .sortable-ghost { opacity: .3; }
     .sortable-drag { opacity: 1; box-shadow: 0 8px 32px rgba(0,0,0,.5); }
@@ -288,10 +314,19 @@
       <div class="stat-box"><div class="stat-num" id="stat-emp">0</div><div class="stat-label">Empare.</div></div>
       <div class="stat-box"><div class="stat-num" id="stat-lib">0</div><div class="stat-label">Libres</div></div>
       <div class="stat-box"><div class="stat-num" id="stat-baj">0</div><div class="stat-label">Bajas</div></div>
+      <div class="stat-box"><div class="stat-num" id="stat-pres" style="color:var(--green)">0</div><div class="stat-label">Presentes</div></div>
     </div>
     <div class="filter-bar">
-      <input class="filter-input" id="search-boxeadores" placeholder="Buscar por nombre…" oninput="renderBoxeadores()" />
+      <input class="filter-input" id="search-boxeadores" placeholder="Buscar por nombre…" oninput="renderBoxeadores()" style="min-width:100px;flex:1" />
       <button class="filter-toggle" id="toggle-libres" onclick="toggleFiltroLibres()">Solo libres</button>
+      <select class="filter-select" id="boxer-gym-filter" onchange="renderBoxeadores()">
+        <option value="">Todos los gimn.</option>
+      </select>
+      <select class="filter-select" id="boxer-sort" onchange="renderBoxeadores()">
+        <option value="carga">Orden carga</option>
+        <option value="nombre">A→Z nombre</option>
+        <option value="gimnasio">A→Z gimnasio</option>
+      </select>
     </div>
     <div id="list-boxeadores"></div>
   </div>
@@ -365,7 +400,13 @@
       <span class="tab-title">📋 Peleas</span>
       <button class="btn btn-ghost btn-sm" onclick="exportCSV()">📥 Exportar</button>
     </div>
-    <div id="peleas-content"></div>
+    <div class="filter-bar">
+      <input class="filter-input" id="search-peleas" placeholder="Buscar por nombre…" oninput="renderPeleas()" style="flex:1;min-width:100px" />
+      <select class="filter-select" id="peleas-gym-filter" onchange="renderPeleas()">
+        <option value="">Todos los gimn.</option>
+      </select>
+    </div>
+    <div id="peleas-content" style="flex:1;overflow-y:auto"></div>
   </div>
 
   <!-- ═══════════ TAB: BLOQUES ═══════════ -->
@@ -520,6 +561,10 @@
     </div>
   </div>
 </div>
+
+<!-- Mini menú de asistencia -->
+<div id="mini-menu-backdrop" onclick="closeMiniMenu()"></div>
+<div id="mini-menu"><div id="mini-menu-content"></div></div>
 
 <script>
 // ══════════════════════════════════════════
@@ -679,8 +724,8 @@ function getGimnasios() {
 
 function updateGymDropdowns() {
   const gyms = getGimnasios();
-  const opts = '<option value="">Todos los gimnasios</option>' + gyms.map(g => `<option value="${esc(g)}">${esc(g)}</option>`).join('');
-  ['match-gym-filter', 'rival-gym-filter'].forEach(id => {
+  const opts = '<option value="">Todos los gimn.</option>' + gyms.map(g => `<option value="${esc(g)}">${esc(g)}</option>`).join('');
+  ['match-gym-filter', 'rival-gym-filter', 'boxer-gym-filter', 'peleas-gym-filter'].forEach(id => {
     const el = document.getElementById(id);
     if (el) { const v = el.value; el.innerHTML = opts; el.value = v; }
   });
@@ -734,29 +779,49 @@ function toggleFiltroLibres() {
   renderBoxeadores();
 }
 
+function getPresenceIcon(b) {
+  if (b.baja) return '🔴';
+  if (b.presente === true) return '✅';
+  return '⬜';
+}
+
 function renderBoxeadores() {
   const search = document.getElementById('search-boxeadores').value.toLowerCase();
+  const gym    = document.getElementById('boxer-gym-filter')?.value || '';
+  const sort   = document.getElementById('boxer-sort')?.value || 'carga';
   let boxeadores = [...STATE.boxeadores];
 
   // Calcular stats antes de filtrar
-  const totales = boxeadores.filter(b => !b.baja);
+  const totales     = STATE.boxeadores.filter(b => !b.baja);
   const emparejados = totales.filter(b => getPeleaActiva(b.id));
-  const libres = totales.filter(b => !getPeleaActiva(b.id));
-  const bajas = STATE.boxeadores.filter(b => b.baja);
+  const libres      = totales.filter(b => !getPeleaActiva(b.id));
+  const bajas       = STATE.boxeadores.filter(b => b.baja);
+  const presentes   = STATE.boxeadores.filter(b => !b.baja && b.presente === true);
   document.getElementById('stat-total').textContent = STATE.boxeadores.length;
   document.getElementById('stat-emp').textContent   = emparejados.length;
   document.getElementById('stat-lib').textContent   = libres.length;
   document.getElementById('stat-baj').textContent   = bajas.length;
+  document.getElementById('stat-pres').textContent  = presentes.length;
 
   // Filtros
   if (search)             boxeadores = boxeadores.filter(b => b.nombre?.toLowerCase().includes(search));
   if (STATE.filtroLibres) boxeadores = boxeadores.filter(b => !b.baja && !getPeleaActiva(b.id));
+  if (gym)                boxeadores = boxeadores.filter(b => b.gimnasio === gym);
 
-  // Ordenar: libres → emparejados → bajas
-  boxeadores.sort((a, b) => {
-    const getOrd = x => x.baja ? 2 : getPeleaActiva(x.id) ? 1 : 0;
-    return getOrd(a) - getOrd(b) || (a.nombre||'').localeCompare(b.nombre||'');
-  });
+  // Ordenar
+  if (sort === 'nombre') {
+    boxeadores.sort((a, b) => (a.nombre||'').localeCompare(b.nombre||''));
+  } else if (sort === 'gimnasio') {
+    boxeadores.sort((a, b) =>
+      (a.gimnasio||'').localeCompare(b.gimnasio||'') || (a.nombre||'').localeCompare(b.nombre||'')
+    );
+  } else {
+    // 'carga': libres → emparejados → bajas, luego por created_at
+    boxeadores.sort((a, b) => {
+      const getOrd = x => x.baja ? 2 : getPeleaActiva(x.id) ? 1 : 0;
+      return getOrd(a) - getOrd(b) || new Date(a.created_at || 0) - new Date(b.created_at || 0);
+    });
+  }
 
   const container = document.getElementById('list-boxeadores');
   if (!boxeadores.length) {
@@ -771,6 +836,7 @@ function renderBoxeadores() {
         <div class="boxer-sub">${esc(b.gimnasio || '—')} · ${b.peso ?? '?'}kg · ${b.peleas ?? 0} peleas · ${esc(b.tipo || '')}</div>
       </div>
       ${getBadge(b)}
+      <button class="presence-btn" onclick="event.stopPropagation();showMiniMenu('${b.id}',this)" title="Estado de asistencia">${getPresenceIcon(b)}</button>
     </div>
   `).join('');
 }
@@ -804,10 +870,6 @@ function showPerfil(id) {
     <div class="modal-sep"></div>
     <div style="display:flex;flex-direction:column;gap:10px">
       <button class="btn btn-ghost btn-full" onclick="closeModal('modal-perfil');showEditBoxer('${id}')">✏️ Editar</button>
-      ${b.baja
-        ? `<button class="btn btn-ghost btn-full" onclick="closeModal('modal-perfil');quitarBaja('${id}')">✅ Quitar baja</button>`
-        : `<button class="btn btn-ghost btn-full" onclick="closeModal('modal-perfil');marcarBaja('${id}')">🔴 Marcar baja</button>`
-      }
       <button class="btn btn-danger btn-full" onclick="closeModal('modal-perfil');eliminarBoxeador('${id}')">🗑️ Eliminar boxeador</button>
     </div>
   `;
@@ -906,6 +968,98 @@ async function marcarBaja(id) { if (isLector()) return;
 //  QUITAR BAJA
 // ══════════════════════════════════════════
 async function quitarBaja(id) { if (isLector()) return;
+  const b = STATE.boxeadores.find(x => x.id === id);
+  showConfirm('Quitar baja', `¿Reactivar a ${b.nombre}?`, async () => {
+    await sb.from('boxeadores').update({ baja: false }).eq('id', id);
+    showToast('✅ Baja quitada');
+  }, { dangerLabel: 'Reactivar' });
+}
+
+// ══════════════════════════════════════════
+//  MINI MENÚ DE ASISTENCIA
+// ══════════════════════════════════════════
+let _miniMenuBoxeadorId = null;
+
+function showMiniMenu(id, btnEl) {
+  if (isLector()) return;
+  _miniMenuBoxeadorId = id;
+  const b = STATE.boxeadores.find(x => x.id === id);
+  if (!b) return;
+
+  const menu     = document.getElementById('mini-menu');
+  const backdrop = document.getElementById('mini-menu-backdrop');
+  const content  = document.getElementById('mini-menu-content');
+
+  const isSinConf = b.presente !== true && !b.baja;
+  const isPresente = b.presente === true && !b.baja;
+
+  const items = [
+    { icon: '⬜', label: 'Sin confirmar', action: `setPresenteStatus('${id}',null)`,  active: isSinConf   },
+    { icon: '✅', label: 'Presente',       action: `setPresenteStatus('${id}',true)`, active: isPresente  },
+    b.baja
+      ? { icon: '🟢', label: 'Quitar baja', action: `quitarBajaMenu('${id}')`, active: false }
+      : { icon: '🔴', label: 'Dar de baja', action: `marcarBajaMenu('${id}')`, active: false },
+  ];
+
+  content.innerHTML = items.map(it => `
+    <div class="mini-menu-item ${it.active ? 'active-opt' : ''}" onclick="${it.action};closeMiniMenu()">
+      <span style="font-size:18px;line-height:1">${it.icon}</span>
+      <span>${it.label}</span>
+      ${it.active ? '<span style="margin-left:auto;font-size:13px">✓</span>' : ''}
+    </div>
+  `).join('');
+
+  // Posicionar cerca del botón
+  const rect = btnEl.getBoundingClientRect();
+  menu.style.minWidth = '190px';
+  const menuH = 3 * 50; // aprox 3 items * 50px
+  const spaceBelow = window.innerHeight - rect.bottom;
+  if (spaceBelow > menuH + 8) {
+    menu.style.top    = (rect.bottom + 4) + 'px';
+    menu.style.bottom = '';
+  } else {
+    menu.style.top    = '';
+    menu.style.bottom = (window.innerHeight - rect.top + 4) + 'px';
+  }
+  // Alinear a la derecha del botón sin salir de pantalla
+  const rightOffset = window.innerWidth - rect.right;
+  menu.style.right = Math.max(4, rightOffset) + 'px';
+  menu.style.left  = '';
+
+  menu.classList.add('open');
+  backdrop.classList.add('open');
+}
+
+function closeMiniMenu() {
+  document.getElementById('mini-menu').classList.remove('open');
+  document.getElementById('mini-menu-backdrop').classList.remove('open');
+  _miniMenuBoxeadorId = null;
+}
+
+async function setPresenteStatus(id, value) {
+  if (isLector()) return;
+  await sb.from('boxeadores').update({ presente: value }).eq('id', id);
+  showToast(value === true ? '✅ Presente' : '⬜ Sin confirmar');
+}
+
+async function marcarBajaMenu(id) {
+  if (isLector()) return;
+  const b = STATE.boxeadores.find(x => x.id === id);
+  const pelea = getPeleaActiva(id);
+  const msg = pelea
+    ? `¿Marcar baja a ${b.nombre}? Su pelea activa se cancelará.`
+    : `¿Marcar baja a ${b.nombre}?`;
+  showConfirm('Marcar baja', msg, async () => {
+    if (pelea) {
+      await sb.from('peleas').update({ cancelada: true, motivo_cancelacion: 'Baja de boxeador' }).eq('id', pelea.id);
+    }
+    await sb.from('boxeadores').update({ baja: true, presente: null }).eq('id', id);
+    showToast('🔴 Boxeador dado de baja');
+  }, { dangerLabel: 'Dar de baja' });
+}
+
+async function quitarBajaMenu(id) {
+  if (isLector()) return;
   const b = STATE.boxeadores.find(x => x.id === id);
   showConfirm('Quitar baja', `¿Reactivar a ${b.nombre}?`, async () => {
     await sb.from('boxeadores').update({ baja: false }).eq('id', id);
@@ -1023,9 +1177,19 @@ function clearMatchBase() {
 //  TAB: MATCH — lista de rivales
 // ══════════════════════════════════════════
 function calcScore(b1, b2) {
-  const diffPeso   = Math.abs((b1.peso   || 0) - (b2.peso   || 0));
-  const diffPeleas = Math.abs((b1.peleas || 0) - (b2.peleas || 0));
-  return 0.6 * (1 / (1 + diffPeso)) + 0.4 * (1 / (1 + diffPeleas));
+  const pesoProm = ((b1.peso || 0) + (b2.peso || 0)) / 2 || 1;
+  const diffRelativa = Math.abs((b1.peso || 0) - (b2.peso || 0)) / pesoProm;
+  const scorePeso = Math.exp(-8 * diffRelativa);
+
+  const expProm = ((b1.peleas || 0) + (b2.peleas || 0)) / 2;
+  const diffExpRel = Math.abs((b1.peleas || 0) - (b2.peleas || 0)) / (expProm + 3);
+  const scoreExp = Math.exp(-4 * diffExpRel);
+
+  const ventajaPeso = (b1.peso || 0) - (b2.peso || 0);
+  const ventajaExp  = (b1.peleas || 0) - (b2.peleas || 0);
+  const compensacion = (ventajaPeso * ventajaExp < 0) ? 0.10 : 0;
+
+  return Math.min(1, 0.50 * scorePeso + 0.50 * scoreExp + compensacion);
 }
 
 function getDiscardReason(base, rival) {
@@ -1201,10 +1365,26 @@ function renderPeleas() {
   destroySortables();
   const container = document.getElementById('peleas-content');
 
-  const activas    = STATE.peleas.filter(p => !p.cancelada);
-  const canceladas = STATE.peleas.filter(p => p.cancelada);
+  const todasActivas = STATE.peleas.filter(p => !p.cancelada);
+  const canceladas   = STATE.peleas.filter(p => p.cancelada);
 
-  if (!activas.length && !canceladas.length) {
+  // Aplicar filtros a activas (canceladas siempre al final, sin filtrar)
+  const pSearch = (document.getElementById('search-peleas')?.value || '').toLowerCase();
+  const pGym    = document.getElementById('peleas-gym-filter')?.value || '';
+  let activas = todasActivas;
+  if (pSearch || pGym) {
+    activas = todasActivas.filter(p => {
+      const [b1, b2] = getPeleaBoxeadores(p);
+      if (pSearch) {
+        const n1 = (b1?.nombre || '').toLowerCase(), n2 = (b2?.nombre || '').toLowerCase();
+        if (!n1.includes(pSearch) && !n2.includes(pSearch)) return false;
+      }
+      if (pGym && b1?.gimnasio !== pGym && b2?.gimnasio !== pGym) return false;
+      return true;
+    });
+  }
+
+  if (!todasActivas.length && !canceladas.length) {
     container.innerHTML = `<div class="empty-state"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z"/></svg><p>No hay peleas todavía</p></div>`;
     return;
   }
@@ -1286,16 +1466,30 @@ function getPeleaBoxeadores(pelea) {
   ];
 }
 
+function getAsistenciaInfo(b1, b2) {
+  const getS = b => !b ? 'sin' : b.baja ? 'baja' : (b.presente === true ? 'pres' : 'sin');
+  const s1 = getS(b1), s2 = getS(b2);
+  const icon = { pres: '✅', baja: '🔴', sin: '⬜' };
+  const icons = `${icon[s1]}${icon[s2]}`;
+  let cssClass = 'asist-gris', label = 'Sin confirmar', highlight = false;
+  if (s1 === 'pres' && s2 === 'pres')                                    { cssClass = 'asist-verde';    label = 'Ambos presentes';   }
+  else if ((s1 === 'pres' || s2 === 'pres') && (s1 === 'baja' || s2 === 'baja')) { cssClass = 'asist-rojo'; label = 'Uno dado de baja'; highlight = true; }
+  else if (s1 === 'pres' || s2 === 'pres')                               { cssClass = 'asist-amarillo'; label = 'Uno confirmado';     }
+  return { icons, cssClass, label, highlight };
+}
+
 function peleaItemHTML(pelea, ordenMap) {
   const [b1, b2] = getPeleaBoxeadores(pelea);
   const pb = STATE.peleasBloques.find(x => x.pelea_id === pelea.id);
   const num = ordenMap?.get(pelea.id) ?? '';
+  const asist = getAsistenciaInfo(b1, b2);
   return `
-    <div class="pelea-item" data-pelea-id="${pelea.id}">
+    <div class="pelea-item ${asist.highlight ? 'asist-alerta' : ''}" data-pelea-id="${pelea.id}">
       <div class="pelea-handle">☰</div>
       <div class="pelea-info">
         <div class="pelea-names"><span style="color:var(--accent);font-size:13px;font-weight:800;margin-right:6px">#${num}</span>${esc(b1?.nombre || '?')} vs ${esc(b2?.nombre || '?')}</div>
-        <div class="pelea-detail">
+        <div class="pelea-asistencia ${asist.cssClass}">${asist.icons} ${asist.label}</div>
+        <div class="pelea-detail" style="margin-top:4px">
           ${b1 ? `${b1.peso ?? '?'}kg · ${b1.edad ?? '?'}a · ${esc(b1.gimnasio || '—')}` : ''}<br>
           ${b2 ? `${b2.peso ?? '?'}kg · ${b2.edad ?? '?'}a · ${esc(b2.gimnasio || '—')}` : ''}
         </div>
